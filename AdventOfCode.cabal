@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 42cb34c71e2052592b2cb614e5622383feb233add42b8d9388c8ede44f2b4766
+-- hash: 318576b52d274d592e8602609ec19b7872e74f49f2d45398e0a8d3b18478ab06
 
 name:           AdventOfCode
 version:        0.1.0.0
@@ -28,21 +28,35 @@ source-repository head
 library
   exposed-modules:
       AdventOfCode
+      AdventOfCode.Day01
+      AdventOfCode.Day02
+      AdventOfCode.Day03
+      AdventOfCode.Day04
+      AdventOfCode.Day05
+      AdventOfCode.Day06
+      AdventOfCode.Day07
+      AdventOfCode.Day08
+      AdventOfCode.Day09
+      AdventOfCode.Prelude
       Lib
   other-modules:
       Paths_AdventOfCode
   hs-source-dirs:
       src
-  default-extensions: LambdaCase OverloadedStrings
+  default-extensions: LambdaCase OverloadedStrings TupleSections
   build-depends:
       base >=4.7 && <5
     , bytestring
+    , containers
     , directory
     , filepath
     , http-client
+    , megaparsec
+    , parser-combinators
     , req
     , text
     , time
+    , vector
   default-language: Haskell2010
 
 executable AdventOfCode-exe
@@ -51,18 +65,22 @@ executable AdventOfCode-exe
       Paths_AdventOfCode
   hs-source-dirs:
       app
-  default-extensions: LambdaCase OverloadedStrings
+  default-extensions: LambdaCase OverloadedStrings TupleSections
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       AdventOfCode
     , base >=4.7 && <5
     , bytestring
+    , containers
     , directory
     , filepath
     , http-client
+    , megaparsec
+    , parser-combinators
     , req
     , text
     , time
+    , vector
   default-language: Haskell2010
 
 test-suite AdventOfCode-test
@@ -72,16 +90,20 @@ test-suite AdventOfCode-test
       Paths_AdventOfCode
   hs-source-dirs:
       test
-  default-extensions: LambdaCase OverloadedStrings
+  default-extensions: LambdaCase OverloadedStrings TupleSections
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       AdventOfCode
     , base >=4.7 && <5
     , bytestring
+    , containers
     , directory
     , filepath
     , http-client
+    , megaparsec
+    , parser-combinators
     , req
     , text
     , time
+    , vector
   default-language: Haskell2010

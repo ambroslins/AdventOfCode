@@ -21,6 +21,8 @@ description:         Please see the README on GitHub at <https://github.com/ambr
 
 dependencies:
 - base >= 4.7 && < 5
+- containers
+- vector
 - req
 - http-client
 - bytestring
@@ -28,10 +30,13 @@ dependencies:
 - time
 - filepath
 - directory
+- megaparsec
+- parser-combinators
 
 default-extensions:
 - LambdaCase
 - OverloadedStrings
+- TupleSections
 
 library:
   source-dirs: src
