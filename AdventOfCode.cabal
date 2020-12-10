@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 318576b52d274d592e8602609ec19b7872e74f49f2d45398e0a8d3b18478ab06
+-- hash: e890a6cf847b7e2c3228118412b5a56c6b1ee8601099453e5bc61d380675a779
 
 name:           AdventOfCode
 version:        0.1.0.0
@@ -38,12 +38,12 @@ library
       AdventOfCode.Day08
       AdventOfCode.Day09
       AdventOfCode.Prelude
-      Lib
   other-modules:
       Paths_AdventOfCode
   hs-source-dirs:
       src
   default-extensions: LambdaCase OverloadedStrings TupleSections
+  ghc-options: -Wall
   build-depends:
       base >=4.7 && <5
     , bytestring
@@ -66,7 +66,7 @@ executable AdventOfCode-exe
   hs-source-dirs:
       app
   default-extensions: LambdaCase OverloadedStrings TupleSections
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:
       AdventOfCode
     , base >=4.7 && <5

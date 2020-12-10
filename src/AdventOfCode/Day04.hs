@@ -12,9 +12,9 @@ parsePassport =
     <$> some
       ( do
           key <- count 3 letterChar
-          char ':'
+          _ <- char ':'
           value <- some (alphaNumChar <|> char '#')
-          space
+          _ <- spaceChar
           pure (key, value)
       )
 
@@ -28,6 +28,7 @@ solution =
 isValid1 :: Passport -> Bool
 isValid1 p = all (`Map.member` p) ["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"]
 
+inRange :: Int -> Int -> Int -> Bool
 inRange a b x = a <= x && x <= b
 
 isValid2 :: Passport -> Bool

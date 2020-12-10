@@ -51,5 +51,5 @@ parseRule = do
         b' <- parseBag
         pure (b', n)
   bs <- (pair `sepBy1` (char ',' >> hspace)) <|> ([] <$ string "no other bags")
-  char '.'
+  _ <- char '.'
   pure $ Rule b (Map.fromList bs)

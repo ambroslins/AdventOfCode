@@ -16,13 +16,12 @@ solve1 = uncurry go . splitAt 25
       if any (\(a, b) -> a /= b && a + b == x) $ pairs ys
         then go (tail ys ++ [x]) xs
         else x
+    go _ _ = 0
     pairs [] = []
     pairs (x : xs) = map (x,) xs ++ pairs xs
 
-solve2 :: [Int] -> Maybe Int
-solve2 input = case cont of
-  Nothing -> Nothing
-  Just c -> Just $ maximum c + minimum c
+solve2 :: [Int] -> Int
+solve2 input = maybe 0 (\c -> maximum c + minimum c) cont
   where
     target = solve1 input
     go acc list

@@ -10,6 +10,7 @@ parse = map (map f) . lines
   where
     f '.' = Open
     f '#' = Tree
+    f _ = error "parse error Day 3"
 
 solution :: Solution
 solution = simpleSolution parse solve1 solve2

@@ -46,8 +46,8 @@ solve1 is = go Set.empty startState
       | pc s `Set.member` executed = acc s
       | otherwise = maybe (acc s) (go (Set.insert (pc s) executed)) (step is s)
 
-solve2 :: Vector Instruction -> Vector Int
-solve2 is = Vector.mapMaybe run iss
+solve2 :: Vector Instruction -> Int
+solve2 is = Vector.head $ Vector.mapMaybe run iss
   where
     iss =
       Vector.imapMaybe

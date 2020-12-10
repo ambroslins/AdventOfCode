@@ -8,11 +8,11 @@ data Password = Password (Int, Int) Char String
 parsePassword :: Parser Password
 parsePassword = do
   x <- decimal
-  char '-'
+  _ <- char '-'
   y <- decimal
   space
   c <- letterChar
-  char ':'
+  _ <- char ':'
   space
   s <- some letterChar
   pure $ Password (x, y) c s
