@@ -4,6 +4,8 @@ module AdventOfCode.Prelude
   ( module Text.Megaparsec,
     module Text.Megaparsec.Char,
     module Control.Monad.Combinators,
+    module Data.Maybe,
+    module Data.Vector,
     Day (..),
     Map,
     Set,
@@ -12,10 +14,8 @@ module AdventOfCode.Prelude
     Text.pack,
     Text.unpack,
     Parser,
-    Vector,
     asum,
     find,
-    fromMaybe,
     sc,
     sc',
     signed,
@@ -52,11 +52,11 @@ import Control.Monad.Combinators
   )
 import Data.Foldable (asum, find)
 import Data.Map (Map)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (catMaybes, fromMaybe)
 import Data.Set (Set)
 import Data.Text (Text)
 import qualified Data.Text as Text
-import Data.Vector (Vector)
+import Data.Vector (Vector, (!?))
 import Data.Void (Void)
 import Text.Megaparsec
   ( Parsec,
