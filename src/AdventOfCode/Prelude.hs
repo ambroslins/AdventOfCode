@@ -8,6 +8,7 @@ module AdventOfCode.Prelude
     module Data.Vector,
     Day (..),
     Map,
+    IntMap,
     Set,
     Solution (..),
     Text,
@@ -51,6 +52,7 @@ import Control.Monad.Combinators
     (<|>),
   )
 import Data.Foldable (asum, find)
+import Data.IntMap (IntMap)
 import Data.Map (Map)
 import Data.Maybe (catMaybes, fromMaybe)
 import Data.Set (Set)

@@ -15,7 +15,7 @@ parseBusTabel =
     <*> (Just <$> decimal <|> Nothing <$ char 'x') `sepBy` char ','
 
 solution :: Solution
-solution = Solution parseBusTabel solve1 solve2
+solution = Solution parseBusTabel solve1 (const ("failed" :: String))
 
 solve1 :: BusTabel -> Integer
 solve1 (BusTabel x xs) =
