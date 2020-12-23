@@ -17,8 +17,10 @@ initMemory :: [Int] -> Memory
 initMemory xs = Memory (last xs) (length xs + 1) (IntMap.fromList $ zip (init xs) [1 ..])
 
 playTurn :: Memory -> Memory
-playTurn (Memory l t s) = Memory x (t + 1) $ IntMap.insert l (t - 1) s
+playTurn (Memory l t s) = x `seq` s' `seq` t' `seq` Memory x t' s'
   where
+    t' = t + 1
+    s' = IntMap.insert l (t - 1) s
     x = maybe 0 ((t - 1) -) $ IntMap.lookup l s
 
 solve1 :: [Int] -> Int
