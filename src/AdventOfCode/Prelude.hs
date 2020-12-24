@@ -4,6 +4,7 @@ module AdventOfCode.Prelude
   ( module Text.Megaparsec,
     module Text.Megaparsec.Char,
     module Control.Monad.Combinators,
+    module Data.Function,
     module Data.Maybe,
     module Data.Vector,
     Day (..),
@@ -46,12 +47,14 @@ import Control.Monad.Combinators
     sepEndBy,
     sepEndBy1,
     skipMany,
+    skipManyTill,
     skipSome,
     some,
     someTill,
     (<|>),
   )
 import Data.Foldable (asum, find)
+import Data.Function (on, (&))
 import Data.IntMap (IntMap)
 import Data.Map (Map)
 import Data.Maybe (catMaybes, fromMaybe)
@@ -67,6 +70,7 @@ import Text.Megaparsec
     notFollowedBy,
     oneOf,
     satisfy,
+    takeWhileP,
     try,
     unexpected,
   )

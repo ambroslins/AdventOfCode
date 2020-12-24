@@ -1,7 +1,6 @@
 module AdventOfCode.Day13 where
 
 import AdventOfCode.Prelude
-import Data.Function (on)
 import Data.List (maximumBy, minimumBy)
 import Data.Maybe (mapMaybe)
 
