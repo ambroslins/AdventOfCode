@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3237c1a8f52f520e1970e4e35d377180cda78118d01733e91bc66d97de02695d
+-- hash: 66e02f8e2a495d85daea807de35983427da3a5fbd8b723a673e3a762f068cf7c
 
 name:           AdventOfCode
 version:        0.1.0.0
@@ -44,6 +44,7 @@ library
       AdventOfCode.Day14
       AdventOfCode.Day15
       AdventOfCode.Day16
+      AdventOfCode.Day17
       AdventOfCode.Prelude
   other-modules:
       Paths_AdventOfCode
@@ -59,7 +60,6 @@ library
     , filepath
     , http-client
     , megaparsec
-    , mtl
     , parser-combinators
     , req
     , text
@@ -84,7 +84,6 @@ executable AdventOfCode-exe
     , filepath
     , http-client
     , megaparsec
-    , mtl
     , parser-combinators
     , req
     , text
@@ -110,7 +109,6 @@ test-suite AdventOfCode-test
     , filepath
     , http-client
     , megaparsec
-    , mtl
     , parser-combinators
     , req
     , text
