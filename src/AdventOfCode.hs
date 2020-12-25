@@ -18,6 +18,7 @@ import qualified AdventOfCode.Day15 as Day15
 import qualified AdventOfCode.Day16 as Day16
 import qualified AdventOfCode.Day17 as Day17
 import qualified AdventOfCode.Day18 as Day18
+import qualified AdventOfCode.Day19 as Day19
 import AdventOfCode.Prelude
 import Control.Exception
 import qualified Data.ByteString.Char8 as BS
@@ -53,7 +54,8 @@ solutions =
       (Day 15, Day15.solution),
       (Day 16, Day16.solution),
       (Day 17, Day17.solution),
-      (Day 18, Day18.solution)
+      (Day 18, Day18.solution),
+      (Day 19, Day19.solution)
     ]
 
 runSolution :: Day -> Solution -> IO ()
