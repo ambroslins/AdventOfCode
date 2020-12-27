@@ -12,6 +12,7 @@ module AdventOfCode.Prelude
     IntMap,
     Set,
     Solution (..),
+    Matrix,
     Text,
     Text.pack,
     Text.unpack,
@@ -57,6 +58,7 @@ import Data.Foldable (asum, find)
 import Data.Function (on, (&))
 import Data.IntMap (IntMap)
 import Data.Map (Map)
+import Data.Matrix (Matrix)
 import Data.Maybe (catMaybes, fromMaybe)
 import Data.Set (Set)
 import Data.Text (Text)
