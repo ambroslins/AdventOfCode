@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2e2f5a7bbf006ccf2bfa3149f89e7656a8db04f5816cc3e1b0872405bea96506
+-- hash: abb7e51411f0aa697c5038a9c467bfa64f5b80419f5742a7cfaf532a8f9e5714
 
 name:           AdventOfCode
 version:        0.1.0.0
@@ -59,7 +59,10 @@ library
       Paths_AdventOfCode
   hs-source-dirs:
       src
-  default-extensions: LambdaCase OverloadedStrings TupleSections
+  default-extensions:
+      LambdaCase
+      OverloadedStrings
+      TupleSections
   ghc-options: -Wall
   build-depends:
       base >=4.7 && <5
@@ -83,7 +86,10 @@ executable AdventOfCode-exe
       Paths_AdventOfCode
   hs-source-dirs:
       app
-  default-extensions: LambdaCase OverloadedStrings TupleSections
+  default-extensions:
+      LambdaCase
+      OverloadedStrings
+      TupleSections
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:
       AdventOfCode
@@ -109,7 +115,10 @@ test-suite AdventOfCode-test
       Paths_AdventOfCode
   hs-source-dirs:
       test
-  default-extensions: LambdaCase OverloadedStrings TupleSections
+  default-extensions:
+      LambdaCase
+      OverloadedStrings
+      TupleSections
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       AdventOfCode
