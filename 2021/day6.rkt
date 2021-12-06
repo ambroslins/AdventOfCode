@@ -22,6 +22,35 @@
   (for/sum ([f fish])
     (stream-ref solve-stream (- (+ days 8) f))))
 
+(define (step-day fish)
+  (let ([len (vector-length fish)])
+    (build-vector
+     len
+     (lambda (i)
+       (let ([v (vector-ref fish (modulo (add1 i) len))])
+         (if
+          (= i 6)
+          (+ v (vector-ref fish 0))
+          v))))))
+
+(define (fish->vector fish)
+  (define v (make-vector 9))
+  (for ([f fish])
+    (vector-set! v f (add1 (vector-ref v f))))
+  v )
+
+(define (solve-vector days fish)
+  (apply
+   +
+   (vector->list
+    (for/fold ([f (fish->vector fish)])
+              ([i (in-range days)])
+      (step-day f)))))
+
 (println (solve 80 input))
 
 (println (solve 256 input))
+
+(println (solve-vector 80 input))
+
+(println (solve-vector 256 input))
