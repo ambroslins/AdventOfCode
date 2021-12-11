@@ -39,10 +39,9 @@
   (if (or (set-member? seen index) (< (array-ref grid index) 10))
       seen
       (let ([adjacent (adjacent-indexes (array-shape grid) index)])
-        (for ([js (in-list adjacent)])
-          (array-set! grid js (add1 (array-ref grid js))))
         (for/fold ([s (set-add seen index)])
                   ([js (in-list adjacent)])
+          (array-set! grid js (add1 (array-ref grid js)))
           (try-flash! grid js s)))))
 
 (define (step grid)
