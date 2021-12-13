@@ -7,9 +7,6 @@
 
 (struct dot (x y) #:transparent)
 
-(struct fold-x (value))
-(struct fold-y (value))
-
 (struct manual (dots folds) #:transparent)
 
 (define dot/p
@@ -17,6 +14,18 @@
     (char/p #\,)
     [y <- integer/p]
     (pure (dot x y))))
+
+(define (fold-x n)
+  (match-lambda [(dot x y)
+                 (if (> x n)
+                     (dot (- (* n 2) x) y)
+                     (dot x y))]))
+(define (fold-y n)
+  (match-lambda [(dot x y)
+                 (if (> y n)
+                     (dot x (- (* n 2) y))
+                     (dot x y))]))
+
 
 (define fold/p
   (do (string/p "fold along ")
@@ -39,25 +48,13 @@
 (define input
   (parse-result! (parse-string input/p (file->string "inputs/13.txt"))))
 
-(define (do-fold fold dots)
-  (let ([f (match fold
-             [(fold-x n)
-              (match-lambda [(dot x y)
-                             (if (> x n)
-                                 (dot (- (* n 2) x) y)
-                                 (dot x y))])]
-             [(fold-y n)
-              (match-lambda [(dot x y)
-                             (if (> y n)
-                                 (dot x (- (* n 2) y))
-                                 (dot x y))])])])
-    (for/set ([d (in-set dots)])
-      (f d))
-    ))
+(define (fold-step f dots)
+  (for/set ([d (in-set dots)])
+    (f d)))
 
 (define (solve1 man)
   (set-count
-   (do-fold
+   (fold-step
     (first (manual-folds man))
     (manual-dots man))))
 
@@ -65,10 +62,11 @@
 
 (define dots
   (foldl
-   do-fold
+   fold-step
    (manual-dots input)
    (manual-folds input)))
 
+; part 2
 (for ([y (in-range 6)])
   (displayln
    (build-string
