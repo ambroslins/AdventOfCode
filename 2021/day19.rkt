@@ -1,8 +1,7 @@
 #lang typed/racket
 
 (require
-  math/matrix
-  math/array)
+  math/matrix)
 
 (define-type Scanner (Setof (Matrix Integer)))
 
@@ -10,47 +9,35 @@
  "day19-parser.rkt"
  [read-input (-> String (Listof Scanner))])
 
-(define test-input
-  (read-input "inputs/19-test.txt"))
-
 (define input
   (read-input "inputs/19.txt"))
 
-(define (cross-product-matrix [v : (Matrix Real)]) : (Matrix Real)
-  (match-let ([(list a b c) (matrix->list v)])
-    (matrix [[0 (- c) b]
-             [c 0 (- a)]
-             [(- b) a 0]])))
+(define rotate-x : (Matrix Integer)
+  (matrix [[1 0 0]
+           [0 0 -1]
+           [0 1 0 ]]))
 
-(define (rotation-matrix [omega : (Matrix Real)] [theta : Real]) : (Matrix Real)
-  (let ([omega-cross (cross-product-matrix omega)])
-    (matrix+ (identity-matrix 3)
-             (matrix-scale omega-cross (sin theta))
-             (matrix-scale (matrix-expt omega-cross 2) (- 1 (cos theta))))))
+(define rotate-y : (Matrix Integer)
+  (matrix [[0 0 1]
+           [0 1 0]
+           [-1 0 0]]))
 
-(define basis
-  (list (col-matrix [1 0 0])
-        (col-matrix [0 1 0])
-        (col-matrix [0 0 1])))
-
-(define angles
-  (build-list 4 (lambda ([i : Real]) (* pi (/ i 4.0)))))
-
+; https://stackoverflow.com/a/16453299/12893756
 (define rotations
-  (for*/set ([omega1 basis]
-             [theta1 angles]
-             [omega2 (take basis 3)]
-             [theta2 (take angles 4)]
-             [omega3 (take basis 2)]
-             [theta3 (take angles 3)]) : (Setof (Matrix Integer))
-    (matrix-map
-     exact-round
-     (matrix* (rotation-matrix omega1 theta1)
-              (rotation-matrix omega2 theta2)
-              (rotation-matrix omega3 theta3)))))
+  (for*/set ([a (in-range 4)]
+             [b (in-range 4)]
+             [c (in-range 4)]
+             [d (in-range 4)]) : (Setof (Matrix Integer))
+    (matrix-map (lambda (x) (assert x exact-integer?))
+                (matrix* (matrix-expt rotate-x a)
+                         (matrix-expt rotate-y b)
+                         (matrix-expt rotate-x c)
+                         (matrix-expt rotate-y d)))))
 
-
-(struct transform ([rotation : (Matrix Integer)] [translation : (Matrix Integer)]) #:transparent)
+(struct transform
+  ([rotation : (Matrix Integer)]
+   [translation : (Matrix Integer)])
+  #:transparent)
 
 (define (transform-scanner [t : transform] [scanner : Scanner])
   (for/set ([s (in-set scanner)]) : Scanner
@@ -81,10 +68,5 @@
              (iter fixed (append xs (list x)))))]
       [(list) fixed]))
   (set-count (iter (first scanners) (rest scanners))))
-
-(define scanner0 (first test-input))
-(define scanner1 (second test-input))
-
-(println (set-count rotations))
 
 (println (solve1 input))
