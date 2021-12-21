@@ -66,12 +66,14 @@
     (let ([cached (hash-ref cache (cons g player-1?) #f)])
       (or cached
           (if (>= (player-score (game-player-b g)) 21)
-              (if player-1? 0 1)
+              (if player-1? (list 0 1) (list 1 0))
               (let ([wins
-                     (for/sum ([(roll n) (in-hash dirac-dice-rolls)])
-                       (* n (iter (move g roll) (not player-1?))))])
+                     (for/fold
+                      ([ps (list 0 0)])
+                      ([(roll n) (in-hash dirac-dice-rolls)])
+                       (map (lambda (p w) (+ p (* n w))) ps (iter (move g roll) (not player-1?))))])
                 (hash-set! cache (cons g player-1?) wins)
                 wins)))))
-  (iter start-game #t))
+  (apply max (iter start-game #t)))
 
 (println (solve2 input))
