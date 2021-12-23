@@ -28,7 +28,7 @@
   (burrow (make-list 7 #f)
           (list (list 3 3 3 3)
                 (list 0 2 1 0)
-                (list 3 1 0 1)
+                (list 2 1 0 1)
                 (list 2 0 2 1))
           0))
 
@@ -103,7 +103,9 @@
                 (right-moves i (first r) (rest r)))))))
 
 (define (moves b)
-  (append (halway-moves b) (room-moves b)))
+  (if (>= (burrow-cost b) 48429)
+      '()
+      (append (halway-moves b) (room-moves b))))
 
 (define (solutions b)
   (let ([ms (moves b)])
