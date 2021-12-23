@@ -113,8 +113,8 @@
             (append-map solutions ms))))
 
 (define (solve b)
-  (apply min (map burrow-cost (solutions b))))
+  (if (burrow-done? b)
+      (burrow-cost b)
+      (apply min 48429 (map solve (moves b)))))
 
 (println (solve input))
-
-; (for-each println (room-moves example))
