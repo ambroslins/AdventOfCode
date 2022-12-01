@@ -1,8 +1,12 @@
+use std::collections::BTreeMap;
 use std::fs;
 mod day01;
 fn main() {
-    let input01 = fs::read_to_string("inputs/01.txt").expect("no input file");
-    let (a, b) = day01::solve(&input01);
-    println!("01: {}, {}", a, b);
-    println!("Hello, world!");
+    let solutions = BTreeMap::from([(1, day01::solve)]);
+    for (day, solve) in &solutions {
+        let path = format!("inputs/{:02}.txt", day);
+        let input01 = fs::read_to_string(path).expect("input file missing");
+        let (a, b) = solve(&input01);
+        println!("day {} a: {}, {}", day, a, b);
+    }
 }
