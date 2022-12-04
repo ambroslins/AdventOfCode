@@ -3,6 +3,7 @@ use std::fs;
 mod day01;
 mod day02;
 mod day03;
+mod day04;
 
 type Solution = fn(&str) -> (String, String);
 
@@ -11,6 +12,7 @@ fn main() {
         (1, day01::solve as Solution),
         (2, day02::solve as Solution),
         (3, day03::solve as Solution),
+        (4, day04::solve as Solution),
     ]);
 
     for (day, solve) in &solutions {
