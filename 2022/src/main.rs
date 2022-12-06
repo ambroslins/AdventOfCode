@@ -5,6 +5,7 @@ mod day02;
 mod day03;
 mod day04;
 mod day05;
+mod day06;
 
 type Solution = fn(&str) -> (String, String);
 
@@ -15,6 +16,7 @@ fn main() {
         (3, day03::solve as Solution),
         (4, day04::solve as Solution),
         (5, day05::solve as Solution),
+        (6, day06::solve as Solution),
     ]);
 
     for (day, solve) in &solutions {
