@@ -16,12 +16,12 @@ fn parse_stacks(input: &str) -> Stacks {
     for line in lines {
         let chars: Vec<char> = line.chars().collect();
         for (i, j) in indices.iter().enumerate() {
-            if let Some(c) = chars.get(j.clone()).filter(|c| c.is_alphabetic()) {
-                stacks[i].push(c.clone());
+            if let Some(c) = chars.get(*j).filter(|c| c.is_alphabetic()) {
+                stacks[i].push(*c);
             }
         }
     }
-    return stacks;
+    stacks
 }
 
 #[derive(Debug, Clone)]
@@ -39,10 +39,10 @@ impl FromStr for Step {
             .split_whitespace()
             .flat_map(|word| word.parse::<usize>())
             .collect();
-        return match values[..] {
+        match values[..] {
             [quantity, from, to] => Ok(Step { quantity, from, to }),
             _ => Err(()),
-        };
+        }
     }
 }
 
@@ -65,15 +65,15 @@ pub fn solve(input: &str) -> (String, String) {
                 let c = stacks[step.from - 1].pop().unwrap();
                 stacks[step.to - 1].push(c);
             }
-            return stacks;
+            stacks
         });
 
     let solution_b: Stacks = steps.iter().fold(starting_steps, |mut stacks, step| {
         let from = &mut stacks[step.from - 1];
         let mut crates: Stack = from.splice((from.len() - step.quantity).., []).collect();
         stacks[step.to - 1].append(&mut crates);
-        return stacks;
+        stacks
     });
 
-    return (top_of_stacks(&solution_a), top_of_stacks(&solution_b));
+    (top_of_stacks(&solution_a), top_of_stacks(&solution_b))
 }

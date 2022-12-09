@@ -13,10 +13,10 @@ struct Dir {
 
 impl Dir {
     fn new() -> Dir {
-        return Dir {
+        Dir {
             dirs: HashMap::new(),
             files: HashMap::new(),
-        };
+        }
     }
 
     fn size(&self) -> usize {
@@ -79,15 +79,14 @@ fn run_commands(commands: &Vec<Command>) -> Dir {
         }
     }
 
-    return root;
+    root
 }
 
 fn flat_sizes(dir: &Dir) -> Vec<usize> {
     return dir
         .dirs
         .values()
-        .map(flat_sizes)
-        .flatten()
+        .flat_map(flat_sizes)
         .chain(std::iter::once(dir.size()))
         .collect();
 }
@@ -95,7 +94,7 @@ fn flat_sizes(dir: &Dir) -> Vec<usize> {
 // this is pretty bad, we calculate the size of each directory multiple times
 pub fn solve(input: &str) -> (String, String) {
     let commands: Vec<Command> = input
-        .split("$")
+        .split('$')
         .filter(|cmd| !cmd.is_empty())
         .map(|cmd| {
             return cmd.trim().parse::<Command>().unwrap();
@@ -110,5 +109,5 @@ pub fn solve(input: &str) -> (String, String) {
     let unused = available - total;
     let delete = required - unused;
     let solution_b: usize = *sizes.iter().filter(|&&size| size >= delete).min().unwrap();
-    return (solution_a.to_string(), solution_b.to_string());
+    (solution_a.to_string(), solution_b.to_string())
 }

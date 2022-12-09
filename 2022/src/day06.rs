@@ -1,10 +1,10 @@
 use std::collections::HashSet;
 
 pub fn solve(input: &str) -> (String, String) {
-    return (
+    (
         find_marker(input, 4).to_string(),
         find_marker(input, 14).to_string(),
-    );
+    )
 }
 
 fn find_marker(input: &str, window_size: usize) -> usize {

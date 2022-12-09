@@ -9,37 +9,38 @@ impl FromStr for Section {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (a, b) = s.split_once('-').ok_or("missing delimiter -".to_string())?;
+        let (a, b) = s
+            .split_once('-')
+            .ok_or_else(|| "missing delimiter -".to_string())?;
         let start = a.parse().map_err(|err: ParseIntError| err.to_string())?;
         let end = b.parse().map_err(|err: ParseIntError| err.to_string())?;
-        return Ok(Section {
-            start: start,
-            end: end,
-        });
+        Ok(Section { start, end })
     }
 }
 
 impl Section {
     fn contains(&self, other: &Section) -> bool {
-        return self.start <= other.start && self.end >= other.end;
+        self.start <= other.start && self.end >= other.end
     }
 
     fn overlaps(&self, other: &Section) -> bool {
         if self.start <= other.start {
-            return self.end >= other.start;
+            self.end >= other.start
         } else {
-            return other.end >= self.start;
-        };
+            other.end >= self.start
+        }
     }
 }
 
 type SectionPair = (Section, Section);
 
 fn parse_section_pair(s: &str) -> Result<SectionPair, String> {
-    let (a, b) = s.split_once(',').ok_or("missing delimiter ,".to_string())?;
+    let (a, b) = s
+        .split_once(',')
+        .ok_or_else(|| "missing delimiter ,".to_string())?;
     let first = a.parse()?;
     let second = b.parse()?;
-    return Ok((first, second));
+    Ok((first, second))
 }
 pub fn solve(input: &str) -> (String, String) {
     let pairs: Vec<SectionPair> = input.lines().flat_map(parse_section_pair).collect();
@@ -51,5 +52,5 @@ pub fn solve(input: &str) -> (String, String) {
         .iter()
         .filter(|(first, second)| first.overlaps(second))
         .count();
-    return (solution_a.to_string(), solution_b.to_string());
+    (solution_a.to_string(), solution_b.to_string())
 }

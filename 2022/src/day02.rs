@@ -61,7 +61,7 @@ fn round_score(a: Shape, b: Shape) -> usize {
 type Outcome = Ordering;
 
 pub fn solve(input: &str) -> (String, String) {
-    return (solve_a(input), solve_b(input));
+    (solve_a(input), solve_b(input))
 }
 
 fn solve_a(input: &str) -> String {
@@ -69,7 +69,7 @@ fn solve_a(input: &str) -> String {
         .lines()
         .into_iter()
         .flat_map(|line: &str| {
-            line.split_once(" ")
+            line.split_once(' ')
                 .and_then(|(a, b)| match (a.parse::<Shape>(), b.parse::<Shape>()) {
                     (Ok(x), Ok(y)) => Some((x, y)),
                     _ => None,
@@ -110,7 +110,7 @@ fn solve_b(input: &str) -> String {
         .lines()
         .into_iter()
         .flat_map(|line: &str| {
-            line.split_once(" ")
+            line.split_once(' ')
                 .and_then(|(a, b)| match (a.parse::<Shape>(), parse_outcome(b)) {
                     (Ok(x), Some(y)) => Some((x, y)),
                     _ => None,

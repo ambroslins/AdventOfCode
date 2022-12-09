@@ -8,7 +8,7 @@ use ndarray::Ix2;
 
 fn solve_a(trees: &Array2<i32>) -> usize {
     let mut visible: HashSet<Ix2> = HashSet::new();
-    fn scan(visible: &mut HashSet<Ix2>, mut view: impl Iterator<Item = (i32, Ix2)>) -> () {
+    fn scan(visible: &mut HashSet<Ix2>, mut view: impl Iterator<Item = (i32, Ix2)>) {
         view.try_fold(-1, |max_height, (current_height, ix)| {
             if current_height > max_height {
                 visible.insert(ix);
@@ -18,7 +18,7 @@ fn solve_a(trees: &Array2<i32>) -> usize {
                     return Some(current_height);
                 };
             }
-            return Some(max_height);
+            Some(max_height)
         });
     }
 
@@ -40,7 +40,7 @@ fn solve_a(trees: &Array2<i32>) -> usize {
         scan(&mut visible, iter.rev());
     }
 
-    return visible.len();
+    visible.len()
 }
 
 fn solve_b(trees: &Array2<i32>) -> usize {
@@ -53,14 +53,14 @@ fn solve_b(trees: &Array2<i32>) -> usize {
                 break;
             }
         }
-        return steps;
+        steps
     }
     fn lane_score(index: usize, view: ArrayView1<i32>) -> usize {
         let &tree_height = view.get(index).unwrap();
         let (front, back) = view.split_at(Axis(0), index);
         let score_front = walk_while_smaller(tree_height, front.into_iter().rev());
         let score_back = walk_while_smaller(tree_height, back.into_iter().skip(1));
-        return score_front * score_back;
+        score_front * score_back
     }
     for (x, col) in trees.columns().into_iter().enumerate() {
         for (y, row) in trees.rows().into_iter().enumerate() {
@@ -68,7 +68,7 @@ fn solve_b(trees: &Array2<i32>) -> usize {
             best_score = std::cmp::max(score, best_score);
         }
     }
-    return best_score;
+    best_score
 }
 
 pub fn solve(input: &str) -> (String, String) {
@@ -83,5 +83,5 @@ pub fn solve(input: &str) -> (String, String) {
             .collect(),
     )
     .unwrap();
-    return (solve_a(&trees).to_string(), solve_b(&trees).to_string());
+    (solve_a(&trees).to_string(), solve_b(&trees).to_string())
 }
