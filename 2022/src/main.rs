@@ -9,6 +9,7 @@ mod day06;
 mod day07;
 mod day08;
 mod day09;
+mod day10;
 
 type Solution = fn(&str) -> (String, String);
 
@@ -23,6 +24,7 @@ fn main() {
         (7, day07::solve as Solution),
         (8, day08::solve as Solution),
         (9, day09::solve as Solution),
+        (10, day10::solve as Solution),
     ]);
     for arg in std::env::args() {
         if let Ok(day) = arg.parse::<usize>() {
@@ -30,7 +32,9 @@ fn main() {
             let path = format!("inputs/{:02}.txt", day);
             let input01 = fs::read_to_string(path).expect("input file missing");
             let (a, b) = solve(&input01);
-            println!("day {day} a: {a}, {b}");
+            println!("day {day}");
+            println!("{a}");
+            println!("{b}");
         }
     }
 }
