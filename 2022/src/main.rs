@@ -13,6 +13,7 @@ mod day10;
 mod day11;
 mod day12;
 mod day13;
+mod day14;
 
 type Solution = fn(&str) -> (String, String);
 
@@ -31,6 +32,7 @@ fn main() {
         (11, day11::solve as Solution),
         (12, day12::solve as Solution),
         (13, day13::solve as Solution),
+        (14, day14::solve as Solution),
     ]);
     for arg in std::env::args() {
         if let Ok(day) = arg.parse::<usize>() {
