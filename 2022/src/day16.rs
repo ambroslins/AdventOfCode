@@ -91,8 +91,13 @@ struct State {
     pressure: u32,
 }
 
-fn max_pressure_release(state: &State, closed: &mut HashSet<Label>, network: &Network) -> u32 {
-    let labels: Vec<Label> = Vec::from_iter(closed.clone().into_iter());
+fn max_pressure_release(
+    state: &State,
+    elephant: Option<&State>,
+    closed: &mut HashSet<Label>,
+    network: &Network,
+) -> u32 {
+    let labels: Vec<Label> = Vec::from_iter(closed.iter().cloned());
     labels
         .iter()
         .flat_map(|next| {
@@ -108,12 +113,19 @@ fn max_pressure_release(state: &State, closed: &mut HashSet<Label>, network: &Ne
                 current: *next,
                 pressure: state.pressure + time * valve.flow,
             };
-            let pressure = max_pressure_release(&s, closed, network);
+            let pressure = max_pressure_release(&s, elephant, closed, network);
             closed.insert(*next);
             Some(pressure)
         })
         .max()
-        .unwrap_or(state.pressure)
+        .unwrap_or_else(|| {
+            state.pressure
+                + if let Some(s) = elephant {
+                    max_pressure_release(s, None, closed, network)
+                } else {
+                    0
+                }
+        })
 }
 
 fn solve_a(network: &Network) -> u32 {
@@ -127,37 +139,7 @@ fn solve_a(network: &Network) -> u32 {
         current: hash_label("AA"),
         pressure: 0,
     };
-    max_pressure_release(&state, &mut closed, network)
-}
-
-fn max_pressure_release_with_elephant(
-    first: &State,
-    second: &State,
-    closed: &mut HashSet<Label>,
-    network: &Network,
-) -> u32 {
-    let labels: Vec<Label> = Vec::from_iter(closed.iter().cloned());
-    labels
-        .iter()
-        .flat_map(|next| {
-            let distance = network.shortest_path(&first.current, next)?;
-            let valve = network.valves.get(next)?;
-            if distance >= first.time {
-                return None;
-            }
-            let time = first.time - distance - 1;
-            closed.remove(next);
-            let s = State {
-                time,
-                current: *next,
-                pressure: first.pressure + time * valve.flow,
-            };
-            let pressure = max_pressure_release_with_elephant(&s, second, closed, network);
-            closed.insert(*next);
-            Some(pressure)
-        })
-        .max()
-        .unwrap_or_else(|| first.pressure + max_pressure_release(second, closed, network))
+    max_pressure_release(&state, None, &mut closed, network)
 }
 
 fn solve_b(network: &Network) -> u32 {
@@ -171,7 +153,7 @@ fn solve_b(network: &Network) -> u32 {
         current: hash_label("AA"),
         pressure: 0,
     };
-    max_pressure_release_with_elephant(&state, &state, &mut closed, network)
+    max_pressure_release(&state, Some(&state), &mut closed, network)
 }
 pub fn solve(input: &str) -> (String, String) {
     let valves: HashMap<Label, Valve> = separated_list1(line_ending, parse_valve)(input)
