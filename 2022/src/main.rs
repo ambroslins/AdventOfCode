@@ -1,3 +1,4 @@
+#![feature(int_roundings)]
 use std::collections::BTreeMap;
 use std::fs;
 mod day01;
@@ -18,6 +19,7 @@ mod day15;
 mod day16;
 mod day17;
 mod day18;
+mod day19;
 
 type Solution = fn(&str) -> (String, String);
 
@@ -41,6 +43,7 @@ fn main() {
         (16, day16::solve as Solution),
         (17, day17::solve as Solution),
         (18, day18::solve as Solution),
+        (19, day19::solve as Solution),
     ]);
     for arg in std::env::args() {
         if let Ok(day) = arg.parse::<usize>() {
