@@ -79,11 +79,13 @@ struct State {
 }
 
 fn maximize_geodes(blueprint: &Blueprint, state: &State) -> usize {
-    if state.time >= 16 {
-        println!("{state:?}");
-    }
     (0..4)
         .flat_map(|resource| {
+            let res_costs = blueprint.robots.column(resource);
+            let most_expensive = res_costs.iter().max().unwrap();
+            if resource != 3 && state.robots[resource] >= *most_expensive {
+                return None;
+            }
             let costs = blueprint.robots.row(resource);
             let dt = 1 + state
                 .resources
@@ -127,20 +129,38 @@ fn solve_a(blueprints: &[Blueprint]) -> usize {
         resources: Array1::zeros(4),
         robots: arr1(&[1, 0, 0, 0]),
     };
-    let (id, max) = blueprints
+    blueprints
         .iter()
         .map(|blueprint| {
             println!("Solving {}", blueprint.id);
-            (blueprint.id, maximize_geodes(blueprint, &state))
+            let max = maximize_geodes(blueprint, &state);
+            println!("Best: {max}");
+            blueprint.id * max
         })
-        .max_by_key(|(_, max)| *max)
-        .unwrap();
-    id * max
+        .sum()
+}
+
+fn solve_b(blueprints: &[Blueprint]) -> usize {
+    let state = State {
+        time: 32,
+        resources: Array1::zeros(4),
+        robots: arr1(&[1, 0, 0, 0]),
+    };
+    blueprints
+        .iter()
+        .take(3)
+        .map(|blueprint| {
+            println!("Solving {}", blueprint.id);
+            let max = maximize_geodes(blueprint, &state);
+            println!("Best: {max}");
+            max
+        })
+        .product()
 }
 
 pub fn solve(input: &str) -> (String, String) {
     let mut parser = separated_list1(line_ending, parse_blueprint);
     let (_, blueprints) = parser(input).unwrap();
     println!("{blueprints:?}");
-    (solve_a(&blueprints).to_string(), "".to_owned())
+    (solve_b(&blueprints).to_string(), "".to_owned())
 }
