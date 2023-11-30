@@ -1,37 +1,61 @@
-cabal-version:      3.4
-name:               AoC2023
-version:            0.1.0.0
+cabal-version:   3.4
+name:            AoC2023
+version:         0.1.0.0
+
 -- synopsis:
 -- description:
-license:            BSD-3-Clause
-license-file:       LICENSE
-author:             Ambros Lins
-maintainer:         ambros.lins@gmail.com
+license:         BSD-3-Clause
+license-file:    LICENSE
+author:          Ambros Lins
+maintainer:      ambros.lins@gmail.com
+
 -- copyright:
-build-type:         Simple
-extra-doc-files:    CHANGELOG.md
+build-type:      Simple
+extra-doc-files: CHANGELOG.md
+
 -- extra-source-files:
 
 common warnings
-    ghc-options: -Wall
+  ghc-options: -Wall
+
+common extensions
+  default-language:   GHC2021
+  default-extensions:
+    LambdaCase
+    OverloadedStrings
+    NamedFieldPuns
+
+common dependencies
+  build-depends:
+    , attoparsec
+    , base                  ^>=4.18.1.0
+    , bytestring
+    , containers
+    , http-client
+    , http-client-tls
+    , http-types
+    , parser-combinators
+    , text
+    , time
+    , unordered-containers
+    , vector
 
 library
-    import:           warnings
-    exposed-modules:  MyLib
-    -- other-modules:
-    -- other-extensions:
-    build-depends:    base ^>=4.18.1.0
-    hs-source-dirs:   src
-    default-language: GHC2021
+  import:          warnings, extensions, dependencies
+  exposed-modules:
+    AdventOfCode.Day01
+    AdventOfCode.Prelude
+    AdventOfCode.Parser
+
+  -- other-modules:
+  -- other-extensions:
+  hs-source-dirs:  src
 
 executable AoC2023
-    import:           warnings
-    main-is:          Main.hs
-    -- other-modules:
-    -- other-extensions:
-    build-depends:
-        base ^>=4.18.1.0,
-        AoC2023
+  import:         warnings, extensions, dependencies
+  main-is:        Main.hs
 
-    hs-source-dirs:   app
-    default-language: GHC2021
+  -- other-modules:
+  -- other-extensions:
+  build-depends:  AoC2023
+  hs-source-dirs: app
