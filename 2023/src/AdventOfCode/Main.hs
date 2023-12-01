@@ -1,21 +1,22 @@
-
-{-# LANGUAGE OverloadedLists #-}
-module AdventOfCode.Main (solve, today, solveToday) where
+module AdventOfCode.Main (solve, today, solveToday, showNominalDiffTime) where
 
 import AdventOfCode.Day01 qualified as Day01
 import AdventOfCode.Prelude
+import Control.DeepSeq (NFData, deepseq)
 import Control.Exception (catch)
 import Control.Exception.Base (throwIO)
 import Data.Attoparsec.ByteString (endOfInput, parseOnly)
 import Data.ByteString qualified as BS
+import Data.IntMap qualified as IntMap
 import Data.Time
-  ( addUTCTime,
+  ( NominalDiffTime,
+    addUTCTime,
+    diffUTCTime,
     getCurrentTime,
     nominalDay,
     toGregorian,
     utctDay,
   )
-import Data.Vector ((!?))
 import Network.HTTP.Client
   ( Cookie (..),
     Request (cookieJar),
@@ -28,9 +29,10 @@ import Network.HTTP.Client
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Network.HTTP.Types (Status (..))
 import System.IO.Error (isDoesNotExistError)
+import Text.Printf (printf)
 
-solutions :: Vector Solution
-solutions = [Day01.solution]
+solutions :: IntMap Solution
+solutions = IntMap.fromList [(1, Day01.solution)]
 
 readInputFile :: Int -> IO ByteString
 readInputFile day = do
@@ -93,19 +95,39 @@ today = do
   let (_, _, day) = toGregorian $ utctDay estTime
   pure day
 
+bench :: (NFData a, NFData b) => (a -> b) -> a -> IO (b, NominalDiffTime)
+bench f x = do
+  start <- x `deepseq` getCurrentTime
+  let result = f x
+  end <- result `deepseq` getCurrentTime
+  pure (result, diffUTCTime end start)
+
+showNominalDiffTime :: NominalDiffTime -> String
+showNominalDiffTime diff
+  | s < 0.01 = printf "%.3f ms" (s * 1e3)
+  | s < 0.1 = printf "%.2f ms" (s * 1e3)
+  | s < 1.0 = printf "%.1f ms" (s * 1e3)
+  | otherwise = printf "%.1f s" s
+  where
+    s = realToFrac diff :: Double
+
 solve :: Int -> IO ()
 solve day = do
   input <- readInputFile day
-  case solutions !? (day - 1) of
+  case IntMap.lookup day solutions of
     Nothing -> putStrLn $ "No solution for day " <> show day
     Just (Solution {parser, part1, part2}) -> do
       putStrLn $ "Day " <> show day <> ":"
-      case parseOnly (parser <* endOfInput) input of
+      (parseResult, parseTime) <- bench (parseOnly (parser <* endOfInput)) input
+      case parseResult of
         Left err -> putStrLn $ "Parser failed on: " <> err
         Right x -> do
-          putStrLn $ "  Part 1: " <> show (part1 x)
-          putStrLn $ "  Part 2: " <> show (part2 x)
-
+          printf "  Parser took %s\n" (showNominalDiffTime parseTime)
+          (result1, time1) <- bench part1 x
+          printf "  Part 1 (took %s): %s\n" (showNominalDiffTime time1) (show result1)
+          (result2, time2) <- bench part2 x
+          printf "  Part 2 (took %s): %s\n" (showNominalDiffTime time2) (show result2)
+          printf "  Total time: %s\n" (showNominalDiffTime (parseTime + time1 + time2))
 
 solveToday :: IO ()
 solveToday = today >>= solve
