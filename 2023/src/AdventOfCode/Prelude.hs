@@ -12,6 +12,7 @@ module AdventOfCode.Prelude
     module Control.Applicative.Combinators,
     sortBy,
     sortOn,
+    foldl',
   )
 where
 
@@ -22,7 +23,7 @@ import Data.ByteString (ByteString)
 import Data.HashMap.Strict (HashMap)
 import Data.HashSet (HashSet)
 import Data.IntMap (IntMap)
-import Data.List (sortBy, sortOn)
+import Data.List (foldl', sortBy, sortOn)
 import Data.Map (Map)
 import Data.Sequence (Seq)
 import Data.Set (Set)
