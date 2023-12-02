@@ -1,8 +1,9 @@
 module AdventOfCode.Main (solve, today, solveToday, showNominalDiffTime) where
 
 import AdventOfCode.Day01 qualified as Day01
+import AdventOfCode.Day02 qualified as Day02
 import AdventOfCode.Prelude
-import Control.DeepSeq (NFData, deepseq)
+import Control.DeepSeq (deepseq)
 import Control.Exception (catch)
 import Control.Exception.Base (throwIO)
 import Data.Attoparsec.ByteString (endOfInput, parseOnly)
@@ -32,7 +33,7 @@ import System.IO.Error (isDoesNotExistError)
 import Text.Printf (printf)
 
 solutions :: IntMap Solution
-solutions = IntMap.fromList [(1, Day01.solution)]
+solutions = IntMap.fromList [(1, Day01.solution), (2, Day02.solution)]
 
 readInputFile :: Int -> IO ByteString
 readInputFile day = do
@@ -90,8 +91,7 @@ downloadInput day = do
 -- | Get the current day of the month for the UTC-5 timezone.
 today :: IO Int
 today = do
-  estTime <- addUTCTime (negate (5 * 3600 + 5 * 60)) <$> getCurrentTime
-  print estTime
+  estTime <- addUTCTime (-5 * 3600) <$> getCurrentTime
   let (_, _, day) = toGregorian $ utctDay estTime
   pure day
 
@@ -104,12 +104,17 @@ bench f x = do
 
 showNominalDiffTime :: NominalDiffTime -> String
 showNominalDiffTime diff
-  | s < 0.01 = printf "%.3f ms" (s * 1e3)
-  | s < 0.1 = printf "%.2f ms" (s * 1e3)
-  | s < 1.0 = printf "%.1f ms" (s * 1e3)
+  | s < 1e-5 = printf "%.3f ns" ns
+  | s < 1e-4 = printf "%.2f ns" ns
+  | s < 1e-3 = printf "%.1f ns" ns
+  | s < 1e-2 = printf "%.3f ms" ms
+  | s < 1e-1 = printf "%.2f ms" ms
+  | s < 1.0 = printf "%.1f ms" ms
   | otherwise = printf "%.1f s" s
   where
     s = realToFrac diff :: Double
+    ms = s * 1e3
+    ns = s * 1e6
 
 solve :: Int -> IO ()
 solve day = do
