@@ -2,6 +2,7 @@ module AdventOfCode.Main (solve, today, solveToday, showNominalDiffTime) where
 
 import AdventOfCode.Day01 qualified as Day01
 import AdventOfCode.Day02 qualified as Day02
+import AdventOfCode.Day03 qualified as Day03
 import AdventOfCode.Prelude
 import Control.DeepSeq (deepseq)
 import Control.Exception (catch)
@@ -33,7 +34,12 @@ import System.IO.Error (isDoesNotExistError)
 import Text.Printf (printf)
 
 solutions :: IntMap Solution
-solutions = IntMap.fromList [(1, Day01.solution), (2, Day02.solution)]
+solutions =
+  IntMap.fromList
+    [ (1, Day01.solution),
+      (2, Day02.solution),
+      (3, Day03.solution)
+    ]
 
 readInputFile :: Int -> IO ByteString
 readInputFile day = do

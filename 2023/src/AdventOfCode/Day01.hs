@@ -4,7 +4,6 @@ import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
 import Data.ByteString.Char8 qualified as BS
 import Data.Char (isAlphaNum, isDigit, ord)
-import Data.Function (fix)
 import Data.List (find)
 
 solution :: Solution

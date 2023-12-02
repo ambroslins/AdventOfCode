@@ -32,27 +32,25 @@ parseGame = do
   Parser.symbol "Game"
   gameId <- Parser.decimal
   Parser.symbol ":"
-  reveales <- (toBag <$> Parser.list cube) `sepBy1` Parser.symbol ";"
-
+  reveales <- reveal `sepBy1` Parser.symbol ";"
   pure (gameId, reveales)
   where
+    reveal = toBag <$> cube `sepBy1` Parser.symbol ","
     cube = do
       n <- Parser.lexeme Parser.decimal
-      c <- Parser.takeWhile1 isAsciiLower
-      pure (c, n)
-    toBag cs =
-      fromMaybe 0
-        <$> Bag
-          { red = lookup "red" cs,
-            green = lookup "green" cs,
-            blue = lookup "blue" cs
-          }
+      color <- Parser.takeWhile1 isAsciiLower
+      pure $ case color of
+        "red" -> \bag -> bag {red = n}
+        "green" -> \bag -> bag {green = n}
+        "blue" -> \bag -> bag {blue = n}
+        _ -> error $ "parseGame: invalid color " <> show color
+    toBag cs = foldl1' (.) cs (Bag 0 0 0)
 
 solve1 :: [Game] -> Int
-solve1 = sum . map (\(gameId, bags) -> if all possible bags then gameId else 0)
+solve1 = sum . map (\(i, bags) -> if all isPossible bags then i else 0)
 
-possible :: Bag Int -> Bool
-possible Bag {red, green, blue} = red <= 12 && green <= 13 && blue <= 14
+isPossible :: Bag Int -> Bool
+isPossible Bag {red, green, blue} = red <= 12 && green <= 13 && blue <= 14
 
 solve2 :: [Game] -> Int
 solve2 = sum . map (product . minCubes . snd)
