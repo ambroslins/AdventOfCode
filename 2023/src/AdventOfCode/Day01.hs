@@ -10,7 +10,7 @@ import Data.List (find)
 solution :: Solution
 solution =
   Solution
-    { parser = Parser.takeWhile1 isAlphaNum `sepEndBy1` Parser.endOfLine,
+    { parser = Parser.takeWhile1 isAlphaNum `sepEndBy` Parser.endOfLine,
       part1 = solve parseDigit,
       part2 = solve parseSpelledDigit
     }

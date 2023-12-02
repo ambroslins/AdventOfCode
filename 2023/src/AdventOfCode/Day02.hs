@@ -13,18 +13,11 @@ data Bag a = Bag
   deriving (Show, Generic, Functor, Foldable)
 
 instance (Semigroup a) => Semigroup (Bag a) where
-  (<>) = zipBag (<>)
-
-instance (Monoid a) => Monoid (Bag a) where
-  mempty = Bag mempty mempty mempty
-  mappend = (<>)
+  Bag r1 g1 b1 <> Bag r2 g2 b2 = Bag (r1 <> r2) (g1 <> g2) (b1 <> b2)
 
 instance (NFData a) => NFData (Bag a)
 
-zipBag :: (a -> b -> c) -> Bag a -> Bag b -> Bag c
-zipBag f (Bag r1 g1 b1) (Bag r2 g2 b2) = Bag (f r1 r2) (f g1 g2) (f b1 b2)
-
-type Game = (Int, [Bag Int])
+type Game = (Int, NonEmpty (Bag Int))
 
 solution :: Solution
 solution =
@@ -39,7 +32,7 @@ parseGame = do
   Parser.symbol "Game"
   gameId <- Parser.decimal
   Parser.symbol ":"
-  reveales <- (toBag <$> Parser.list cube) `sepBy` Parser.symbol ";"
+  reveales <- (toBag <$> Parser.list cube) `sepBy1` Parser.symbol ";"
 
   pure (gameId, reveales)
   where
@@ -55,17 +48,14 @@ parseGame = do
             blue = lookup "blue" cs
           }
 
-bag1 :: Bag Int
-bag1 = Bag {red = 12, green = 13, blue = 14}
-
 solve1 :: [Game] -> Int
 solve1 = sum . map (\(gameId, bags) -> if all possible bags then gameId else 0)
 
 possible :: Bag Int -> Bool
-possible b = and (zipBag (<=) b bag1)
+possible Bag {red, green, blue} = red <= 12 && green <= 13 && blue <= 14
 
 solve2 :: [Game] -> Int
 solve2 = sum . map (product . minCubes . snd)
 
-minCubes :: [Bag Int] -> Bag Int
-minCubes = fmap getMax . foldMap' (fmap Max)
+minCubes :: NonEmpty (Bag Int) -> Bag Int
+minCubes = fmap getMax . foldMap1' (fmap Max)

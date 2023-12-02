@@ -1,35 +1,40 @@
 module AdventOfCode.Prelude
   ( Solution (..),
     ByteString,
+    Generic,
     HashMap,
     HashSet,
     IntMap,
     Map,
+    NFData,
     Parser,
     Set,
     Vector,
-    Generic,
-    NFData,
     module Control.Applicative.Combinators,
-    module Data.Maybe,
+    module Control.Applicative.Combinators.NonEmpty,
     module Data.Either,
+    module Data.Foldable,
+    module Data.Foldable1,
+    module Data.Maybe,
+    module Data.List.NonEmpty,
     sortBy,
     sortOn,
-    foldl',
-    foldMap',
   )
 where
 
-import Control.Applicative.Combinators
+import Control.Applicative.Combinators hiding (endBy1, sepBy1, sepEndBy1, some, someTill)
+import Control.Applicative.Combinators.NonEmpty
 import Control.DeepSeq (NFData)
 import Data.Attoparsec.ByteString (Parser)
 import Data.ByteString (ByteString)
 import Data.Either
-import Data.Foldable (foldMap')
+import Data.Foldable (foldMap', foldl')
+import Data.Foldable1 (Foldable1, foldMap1', foldl1', foldr1)
 import Data.HashMap.Strict (HashMap)
 import Data.HashSet (HashSet)
 import Data.IntMap (IntMap)
-import Data.List (foldl', sortBy, sortOn)
+import Data.List (sortBy, sortOn)
+import Data.List.NonEmpty (NonEmpty (..), nonEmpty)
 import Data.Map (Map)
 import Data.Maybe
 import Data.Set (Set)
