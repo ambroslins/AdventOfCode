@@ -46,6 +46,7 @@ library
   exposed-modules:
     AdventOfCode.Day01
     AdventOfCode.Day02
+    AdventOfCode.Day03
     AdventOfCode.Main
     AdventOfCode.Prelude
     AdventOfCode.Parser
