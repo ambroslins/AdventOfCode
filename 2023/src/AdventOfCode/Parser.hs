@@ -7,6 +7,7 @@ module AdventOfCode.Parser
     list,
     symbol,
     whitespace,
+    sepEndBy',
   )
 where
 
@@ -32,3 +33,6 @@ lexeme p = p <* whitespace
 
 symbol :: ByteString -> Parser ()
 symbol s = string s *> whitespace
+
+sepEndBy' :: Parser a -> Parser b -> Parser [a]
+sepEndBy' p sep = sepBy' p sep <* option undefined sep

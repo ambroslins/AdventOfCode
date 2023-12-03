@@ -23,6 +23,8 @@ module AdventOfCode.Prelude
     module Data.List.NonEmpty,
     sortBy,
     sortOn,
+    sepEndBy',
+    sepEndBy1',
   )
 where
 
@@ -30,7 +32,7 @@ import Control.Applicative.Combinators hiding (endBy1, sepBy1, sepEndBy1, some, 
 import Control.Applicative.Combinators.NonEmpty
 import Control.DeepSeq (NFData)
 import Control.Monad (guard)
-import Data.Attoparsec.ByteString (Parser)
+import Data.Attoparsec.ByteString (Parser, sepBy')
 import Data.Bifunctor (first, second)
 import Data.ByteString (ByteString)
 import Data.Either
@@ -56,3 +58,12 @@ data Solution = forall a b c.
     part1 :: a -> b,
     part2 :: a -> c
   }
+
+sepEndBy' :: Parser a -> Parser b -> Parser [a]
+sepEndBy' p sep = sepBy' p sep <* optional sep
+
+sepEndBy1' :: Parser a -> Parser b -> Parser (NonEmpty a)
+sepEndBy1' p sep = do
+  !x <- p
+  xs <- sepEndBy' p sep
+  pure (x :| xs)
