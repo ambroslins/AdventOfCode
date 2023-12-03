@@ -50,7 +50,7 @@ import Data.Vector (Vector)
 import GHC.Generics (Generic)
 
 data Solution = forall a b c.
-  (Show b, Show c, NFData a, NFData b, NFData c) =>
+  (Show b, Show c, NFData b, NFData c) =>
   Solution
   { parser :: Parser a,
     part1 :: a -> b,

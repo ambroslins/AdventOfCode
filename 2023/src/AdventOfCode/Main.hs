@@ -4,7 +4,7 @@ import AdventOfCode.Day01 qualified as Day01
 import AdventOfCode.Day02 qualified as Day02
 import AdventOfCode.Day03 qualified as Day03
 import AdventOfCode.Prelude
-import Control.DeepSeq (deepseq)
+import Control.DeepSeq (force)
 import Control.Exception (catch)
 import Control.Exception.Base (throwIO)
 import Data.Attoparsec.ByteString (endOfInput, parseOnly)
@@ -101,11 +101,15 @@ today = do
   let (_, _, day) = toGregorian $ utctDay estTime
   pure day
 
-bench :: (NFData a, NFData b) => (a -> b) -> a -> IO (b, NominalDiffTime)
+-- | Run some function f and benchmark it with the give argument.
+--
+-- Returns the result of @f x@ and the time it took to run it.
+-- Will evalute the result of @f x@ to WHNF before returning.
+bench :: (a -> b) -> a -> IO (b, NominalDiffTime)
 bench f x = do
-  start <- x `deepseq` getCurrentTime
+  start <- x `seq` getCurrentTime
   let result = f x
-  end <- result `deepseq` getCurrentTime
+  end <- result `seq` getCurrentTime
   pure (result, diffUTCTime end start)
 
 showNominalDiffTime :: NominalDiffTime -> String
@@ -134,9 +138,9 @@ solve day = do
         Left err -> putStrLn $ "Parser failed on: " <> err
         Right x -> do
           printf "  Parser took %s\n" (showNominalDiffTime parseTime)
-          (result1, time1) <- bench part1 x
+          (result1, time1) <- bench (force . part1) x
           printf "  Part 1 (took %s): %s\n" (showNominalDiffTime time1) (show result1)
-          (result2, time2) <- bench part2 x
+          (result2, time2) <- bench (force . part2) x
           printf "  Part 2 (took %s): %s\n" (showNominalDiffTime time2) (show result2)
           printf "  Total time: %s\n" (showNominalDiffTime (parseTime + time1 + time2))
 

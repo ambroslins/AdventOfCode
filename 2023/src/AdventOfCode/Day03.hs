@@ -15,9 +15,7 @@ solution =
     }
 
 data Part = Number Int | Symbol Char
-  deriving (Show, Generic)
-
-instance NFData Part
+  deriving (Show)
 
 type Pos = (Int, Int)
 
