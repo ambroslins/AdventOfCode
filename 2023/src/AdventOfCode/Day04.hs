@@ -3,7 +3,6 @@ module AdventOfCode.Day04 (solution) where
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
 import Data.IntSet qualified as IntSet
-import Data.Vector qualified as Vector
 
 solution :: Solution
 solution =
@@ -13,34 +12,29 @@ solution =
       part2 = solve2
     }
 
-data Card = Card
-  { cardId :: !Int,
-    winning :: [Int],
-    numbers :: [Int]
-  }
-  deriving (Show)
-
-parseCard :: Parser Card
+parseCard :: Parser Int
 parseCard = do
   Parser.symbol "Card"
-  cardId <- Parser.decimal
+  _cardId <- Parser.decimal @Int
   Parser.symbol ":"
   winning <- Parser.int `sepEndBy'` Parser.takeWhile1 (== ' ')
   Parser.symbol "|"
   numbers <- Parser.int `sepEndBy'` Parser.takeWhile1 (== ' ')
+  let numSet = IntSet.fromList winning
 
-  pure Card {cardId, winning, numbers}
+  pure $ count (`IntSet.member` numSet) numbers
 
-solve1 :: [Card] -> Int
+solve1 :: [Int] -> Int
 solve1 = sum . map score
   where
-    score c = 2 ^ matches c `div` 2
+    score m = 2 ^ max 0 (m - 1)
 
-matches :: Card -> Int
-matches Card {winning, numbers} = IntSet.size $ IntSet.fromList numbers `IntSet.intersection` IntSet.fromList winning
-
-solve2 :: [Card] -> Int
-solve2 cards = Vector.sum $ foldl' go copies $ zip [0 ..] $ map matches cards
+solve2 :: [Int] -> Int
+solve2 = sum . go . map (1,)
   where
-    copies = Vector.replicate (length cards) 1 :: Vector Int
-    go cs (i, m) = Vector.accum (+) cs [(j, cs Vector.! i) | j <- [i + 1 .. i + m]]
+    go [] = []
+    go ((c, m) : xs) = c : go (addCopies c m xs)
+
+    addCopies c m = \case
+      (x : xs) | m > 0 -> first (+ c) x : addCopies c (m - 1) xs
+      xs -> xs

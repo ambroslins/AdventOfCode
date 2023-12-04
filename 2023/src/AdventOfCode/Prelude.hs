@@ -25,10 +25,18 @@ module AdventOfCode.Prelude
     sortOn,
     sepEndBy',
     sepEndBy1',
+    count,
   )
 where
 
-import Control.Applicative.Combinators hiding (endBy1, sepBy1, sepEndBy1, some, someTill)
+import Control.Applicative.Combinators hiding
+  ( count,
+    endBy1,
+    sepBy1,
+    sepEndBy1,
+    some,
+    someTill,
+  )
 import Control.Applicative.Combinators.NonEmpty
 import Control.DeepSeq (NFData)
 import Control.Monad (guard)
@@ -67,3 +75,6 @@ sepEndBy1' p sep = do
   !x <- p
   xs <- sepEndBy' p sep
   pure (x :| xs)
+
+count :: (Foldable f) => (a -> Bool) -> f a -> Int
+count p = foldl' (\acc x -> if p x then acc + 1 else acc) 0
