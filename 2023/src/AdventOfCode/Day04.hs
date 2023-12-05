@@ -2,7 +2,8 @@ module AdventOfCode.Day04 (solution) where
 
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
-import Data.IntSet qualified as IntSet
+import Data.Char (isDigit)
+import Data.HashSet qualified as HashSet
 
 solution :: Solution
 solution =
@@ -17,12 +18,12 @@ parseCard = do
   Parser.symbol "Card"
   _cardId <- Parser.decimal @Int
   Parser.symbol ":"
-  winning <- Parser.int `sepEndBy'` Parser.takeWhile1 (== ' ')
+  winning <- Parser.takeWhile1 isDigit `sepEndBy'` Parser.takeWhile1 (== ' ')
   Parser.symbol "|"
-  numbers <- Parser.int `sepEndBy'` Parser.takeWhile1 (== ' ')
-  let numSet = IntSet.fromList winning
+  numbers <- Parser.takeWhile1 isDigit `sepEndBy'` Parser.takeWhile1 (== ' ')
+  let winningSet = HashSet.fromList winning
 
-  pure $ count (`IntSet.member` numSet) numbers
+  pure $ count (`HashSet.member` winningSet) numbers
 
 solve1 :: [Int] -> Int
 solve1 = sum . map score
@@ -30,11 +31,6 @@ solve1 = sum . map score
     score m = 2 ^ max 0 (m - 1)
 
 solve2 :: [Int] -> Int
-solve2 = sum . go . map (1,)
+solve2 = sum . foldr go []
   where
-    go [] = []
-    go ((c, m) : xs) = c : go (addCopies c m xs)
-
-    addCopies c m = \case
-      (x : xs) | m > 0 -> first (+ c) x : addCopies c (m - 1) xs
-      xs -> xs
+    go c cs = 1 + sum (take c cs) : cs
