@@ -116,17 +116,19 @@ bench f x = do
 
 showNominalDiffTime :: NominalDiffTime -> String
 showNominalDiffTime diff
-  | s < 1e-5 = printf "%.3f ns" ns
-  | s < 1e-4 = printf "%.2f ns" ns
-  | s < 1e-3 = printf "%.1f ns" ns
+  | s < 1e-5 = printf "%.3f μs" us
+  | s < 1e-4 = printf "%.2f μs" us
+  | s < 1e-3 = printf "%.1f μs" us
   | s < 1e-2 = printf "%.3f ms" ms
   | s < 1e-1 = printf "%.2f ms" ms
-  | s < 1.0 = printf "%.1f ms" ms
+  | s < 1e+0 = printf "%.1f ms" ms
+  | s < 1e+1 = printf "%.3f s" s
+  | s < 1e+2 = printf "%.2f s" s
   | otherwise = printf "%.1f s" s
   where
     s = realToFrac diff :: Double
     ms = s * 1e3
-    ns = s * 1e6
+    us = s * 1e6
 
 solve :: Int -> IO ()
 solve day = do
