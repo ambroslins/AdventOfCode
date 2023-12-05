@@ -48,6 +48,7 @@ library
     AdventOfCode.Day02
     AdventOfCode.Day03
     AdventOfCode.Day04
+    AdventOfCode.Day05
     AdventOfCode.Main
     AdventOfCode.Prelude
     AdventOfCode.Parser
