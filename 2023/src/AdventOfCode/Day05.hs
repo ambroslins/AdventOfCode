@@ -1,58 +1,72 @@
-module AdventOfCode.Day05 (solution) where
+module AdventOfCode.Day05 where
 
+import AdventOfCode.Interval (Interval)
+import AdventOfCode.Interval qualified as Interval
 import AdventOfCode.Parser qualified as Parer
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude hiding (Map)
 import Data.Char (isAsciiLower)
-import Data.Monoid (Endo (..))
-import Debug.Trace (trace)
+
+type Range = Interval Int
+
+type Map = [(Range, Int)]
 
 solution :: Solution
 solution =
   Solution
     { parser = parseInput,
-      part1 = uncurry solve1,
-      part2 = uncurry solve2
+      part1 = uncurry (solve . ranges1),
+      part2 = uncurry (solve . ranges2)
     }
 
-type Map = Int -> Int
-
-type Input = ([Int], [Map])
-
-parseInput :: Parser Input
+parseInput :: Parser ([(Int, Int)], [Map])
 parseInput = do
-  seeds <- Parser.symbol "seeds:" *> Parser.decimal `sepBy` Parser.whitespace
+  seeds <- Parser.symbol "seeds:" *> pair `sepBy` Parser.whitespace
   Parser.skipSpace
   maps <- parseMap `sepEndBy` Parer.endOfLine
   pure (seeds, maps)
+  where
+    pair = do
+      x <- Parser.decimal
+      Parser.whitespace
+      y <- Parser.decimal
+      pure (x, y)
 
 parseMap :: Parser Map
 parseMap = do
   _name <- Parser.lexeme $ Parser.takeWhile1 (\c -> isAsciiLower c || c == '-')
   Parser.symbol "map:" >> Parser.endOfLine
-  ms <- parseMapLine `sepEndBy` Parser.endOfLine
-  pure $ foldl' (flip ($)) id ms
+  parseMapLine `sepEndBy'` Parser.endOfLine
 
-parseMapLine :: Parser (Map -> Map)
+parseMapLine :: Parser (Range, Int)
 parseMapLine = do
   destination <- Parser.lexeme Parser.decimal
   source <- Parser.lexeme Parser.decimal
-  range <- Parser.lexeme Parser.decimal
-  pure $ \k x ->
-    let d = x - source
-     in if d >= 0 && d < range
-          then destination + d
-          else k x
+  len <- Parser.lexeme Parser.decimal
+  let range = Interval.make source (source + len)
+      shift = destination - source
+  pure (range, shift)
 
-solve1 :: [Int] -> [Map] -> Int
-solve1 seeds maps = minimum $ map f seeds
-  where
-    f x = foldl' (flip ($)) x maps
+solve :: [Range] -> [Map] -> Int
+solve ranges =
+  minimum
+    . map Interval.start
+    . foldl' (\rs m -> concatMap (applyMap m) rs) ranges
 
-solve2 :: [Int] -> [Map] -> Int
-solve2 seeds = solve1 (ranges seeds)
+applyMap :: Map -> Range -> [Range]
+applyMap = foldl' go f
   where
-    ranges = \case
-      (x : y : ys) -> [x .. x + y] <> ys
-      [_] -> []
-      [] -> []
+    f range = [range | not (Interval.null range)]
+    go k (r, shift) range
+      | Interval.null range = []
+      | Interval.null intersection = k range
+      | otherwise = Interval.shift shift intersection : k left <> k right
+      where
+        intersection = Interval.intersection range r
+        (left, right) = Interval.difference range r
+
+ranges1 :: [(Int, Int)] -> [Range]
+ranges1 = concatMap (\(x, y) -> [Interval.make x (x + 1), Interval.make y (y + 1)])
+
+ranges2 :: [(Int, Int)] -> [Range]
+ranges2 = map (\(x, y) -> Interval.make x (x + y))

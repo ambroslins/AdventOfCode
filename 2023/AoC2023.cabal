@@ -35,6 +35,7 @@ common dependencies
     , http-client
     , http-client-tls
     , http-types
+    , parallel
     , parser-combinators
     , text
     , time
@@ -49,6 +50,7 @@ library
     AdventOfCode.Day03
     AdventOfCode.Day04
     AdventOfCode.Day05
+    AdventOfCode.Interval
     AdventOfCode.Main
     AdventOfCode.Prelude
     AdventOfCode.Parser
@@ -60,6 +62,8 @@ library
 executable AoC2023
   import:         warnings, extensions, dependencies
   main-is:        Main.hs
+  ghc-options:
+    -threaded
 
   -- other-modules:
   -- other-extensions:
