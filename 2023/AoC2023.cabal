@@ -50,6 +50,7 @@ library
     AdventOfCode.Day03
     AdventOfCode.Day04
     AdventOfCode.Day05
+    AdventOfCode.Day06
     AdventOfCode.Interval
     AdventOfCode.Main
     AdventOfCode.Prelude
