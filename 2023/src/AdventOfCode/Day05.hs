@@ -54,10 +54,10 @@ solve ranges =
     . foldl' (\rs m -> concatMap (applyMap m) rs) ranges
 
 applyMap :: Map -> Range -> [Range]
-applyMap = foldl' go f
+applyMap = foldr go f
   where
     f range = [range | not (Interval.null range)]
-    go k (r, shift) range
+    go (r, shift) k range
       | Interval.null range = []
       | Interval.null intersection = k range
       | otherwise = Interval.shift shift intersection : k left <> k right
