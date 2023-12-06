@@ -23,6 +23,7 @@ module AdventOfCode.Prelude
     module Data.List.NonEmpty,
     sortBy,
     sortOn,
+    sepBy',
     sepEndBy',
     sepEndBy1',
     count,
