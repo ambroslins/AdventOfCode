@@ -19,55 +19,51 @@ data Kind
 
 type Card = Char
 
-type Hand = ByteString
+type Cards = ByteString
+
+data Hand = Hand
+  { kind :: !Kind,
+    cards :: !Cards
+  }
+  deriving (Show, Eq)
+
+instance Ord Hand where
+  compare = comparing kind <> (compareCards `on` cards)
+    where
+      compareCards cs1 cs2 = fold $ BS.zipWith compareCard cs1 cs2
 
 solution :: Solution
 solution =
   Solution
     { parser = parseLine `sepEndBy'` Parser.endOfLine,
-      part1 = solve compareHand,
-      part2 = solve compareWithJoker
+      part1 = solve makeHand,
+      part2 = solve makeHandWithJoker
     }
 
-parseLine :: Parser (Hand, Int)
+parseLine :: Parser (Cards, Int)
 parseLine = do
   cards <- Parser.takeWhile1 isAlphaNum
   Parser.whitespace
   bid <- Parser.decimal
   pure (cards, bid)
 
-solve :: (Hand -> Hand -> Ordering) -> [(Hand, Int)] -> Int
-solve cmp = sum . zipWith (*) [1 ..] . map snd . sortBy (cmp `on` fst)
+solve :: (Cards -> Hand) -> [(Cards, Int)] -> Int
+solve make = sum . zipWith (*) [1 ..] . map snd . sortOn (make . fst)
+
+makeHand :: Cards -> Hand
+makeHand cards = Hand {kind = handKind 0 cards, cards}
+
+makeHandWithJoker :: Cards -> Hand
+makeHandWithJoker cs =
+  Hand
+    { kind = handKind (BS.count 'J' cs) (BS.filter (/= 'J') cs),
+      cards = BS.map (\c -> if c == 'J' then '1' else c) cs
+    }
 
 compareCard :: Card -> Card -> Ordering
 compareCard =
-  fold
-    [ comparing (== 'A'),
-      comparing (== 'K'),
-      comparing (== 'Q'),
-      comparing (== 'J'),
-      comparing (== 'T'),
-      compare
-    ]
-
-compareHand :: Hand -> Hand -> Ordering
-compareHand = compareKind <> compareCardsBy compareCard
-
-compareWithJoker :: Hand -> Hand -> Ordering
-compareWithJoker =
-  compareKindWithJoker
-    <> compareCardsBy (comparing (/= 'J') <> compareCard)
-
-compareKind :: Hand -> Hand -> Ordering
-compareKind = comparing (handKind 0)
-
-compareKindWithJoker :: Hand -> Hand -> Ordering
-compareKindWithJoker = comparing kind
-  where
-    kind hand = handKind (BS.count 'J' hand) (BS.filter (/= 'J') hand)
-
-compareCardsBy :: (Card -> Card -> Ordering) -> Hand -> Hand -> Ordering
-compareCardsBy f h1 h2 = fold $ BS.zipWith f h1 h2
+  foldMap comparing [(== 'A'), (== 'K'), (== 'Q'), (== 'J'), (== 'T')]
+    <> compare
 
 handKind :: Int -> ByteString -> Kind
 handKind jokers hand =
