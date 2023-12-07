@@ -6,6 +6,7 @@ import AdventOfCode.Day03 qualified as Day03
 import AdventOfCode.Day04 qualified as Day04
 import AdventOfCode.Day05 qualified as Day05
 import AdventOfCode.Day06 qualified as Day06
+import AdventOfCode.Day07 qualified as Day07
 import AdventOfCode.Prelude
 import Control.DeepSeq (force)
 import Control.Exception (catch)
@@ -44,7 +45,8 @@ solutions =
       (3, Day03.solution),
       (4, Day04.solution),
       (5, Day05.solution),
-      (6, Day06.solution)
+      (6, Day06.solution),
+      (7, Day07.solution)
     ]
 
 readInputFile :: Int -> IO ByteString
