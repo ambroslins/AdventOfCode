@@ -4,8 +4,7 @@ import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
 import Data.ByteString.Char8 qualified as BS
 import Data.Char (isAlphaNum)
-import Data.Foldable (fold)
-import Data.Ord (comparing)
+import Data.Char qualified as Char
 
 data Kind
   = HighCard
@@ -23,14 +22,9 @@ type Cards = ByteString
 
 data Hand = Hand
   { kind :: !Kind,
-    cards :: !Cards
+    value :: !Int
   }
-  deriving (Show, Eq)
-
-instance Ord Hand where
-  compare = comparing kind <> (compareCards `on` cards)
-    where
-      compareCards cs1 cs2 = fold $ BS.zipWith compareCard cs1 cs2
+  deriving (Show, Eq, Ord)
 
 solution :: Solution
 solution =
@@ -51,19 +45,30 @@ solve :: (Cards -> Hand) -> [(Cards, Int)] -> Int
 solve make = sum . zipWith (*) [1 ..] . map snd . sortOn (make . fst)
 
 makeHand :: Cards -> Hand
-makeHand cards = Hand {kind = handKind 0 cards, cards}
+makeHand cards =
+  Hand
+    { kind = handKind 0 cards,
+      value = cardsValue cardValue cards
+    }
 
 makeHandWithJoker :: Cards -> Hand
 makeHandWithJoker cs =
   Hand
     { kind = handKind (BS.count 'J' cs) (BS.filter (/= 'J') cs),
-      cards = BS.map (\c -> if c == 'J' then '1' else c) cs
+      value = cardsValue (\c -> if c == 'J' then 1 else cardValue c) cs
     }
 
-compareCard :: Card -> Card -> Ordering
-compareCard =
-  foldMap comparing [(== 'A'), (== 'K'), (== 'Q'), (== 'J'), (== 'T')]
-    <> compare
+cardValue :: Card -> Int
+cardValue = \case
+  'A' -> 14
+  'K' -> 13
+  'Q' -> 12
+  'J' -> 11
+  'T' -> 10
+  c -> Char.ord c - Char.ord '0'
+
+cardsValue :: (Card -> Int) -> Cards -> Int
+cardsValue f = BS.foldl' (\acc c -> f c + 15 * acc) 0
 
 handKind :: Int -> ByteString -> Kind
 handKind jokers hand =
