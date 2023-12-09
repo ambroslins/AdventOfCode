@@ -9,7 +9,6 @@ module AdventOfCode.Prelude
     NFData,
     Parser,
     Set,
-    Vector,
     module Control.Applicative.Combinators,
     module Control.Applicative.Combinators.NonEmpty,
     module Control.Monad,
@@ -57,7 +56,6 @@ import Data.List.NonEmpty (NonEmpty (..), nonEmpty)
 import Data.Map (Map)
 import Data.Maybe
 import Data.Set (Set)
-import Data.Vector (Vector)
 import GHC.Generics (Generic)
 
 data Solution = forall a b c.
