@@ -5,7 +5,6 @@ module AdventOfCode.Parser
     int,
     lexeme,
     line,
-    list,
     symbol,
     whitespace,
   )
@@ -25,10 +24,7 @@ int :: Parser Int
 int = signed decimal
 
 line :: Parser ByteString
-line = Word8.takeWhile1 (not . isEndOfLine) <* endOfLine
-
-list :: Parser a -> Parser [a]
-list p = p `sepBy` lexeme (char ',')
+line = Word8.takeWhile1 (not . isEndOfLine)
 
 whitespace :: Parser ()
 whitespace = Word8.skipWhile isHorizontalSpace
