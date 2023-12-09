@@ -2,6 +2,7 @@ module AdventOfCode.Day08 (solution) where
 
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
+import Control.Parallel.Strategies (parMap, rseq)
 import Data.ByteString.Char8 qualified as BS
 import Data.Char (isAsciiUpper)
 import Data.HashMap.Strict ((!))
@@ -29,7 +30,7 @@ solution =
         nodes <- parseNode `sepEndBy` Parser.endOfLine
         pure (steps, makeNodeMap nodes),
       part1 = uncurry solve1,
-      part2 = count (BS.isSuffixOf "A") . HashMap.keys . snd
+      part2 = uncurry solve2
     }
 
 parseSteps :: Parser Steps
@@ -61,14 +62,18 @@ makeNodeMap nodes = nodeMap
 walkNetwork :: Node -> Steps -> [Node]
 walkNetwork = scanl' (flip ($))
 
-countStepsTo :: Node -> Steps -> Label -> Int
-countStepsTo node steps target =
-  fromMaybe
-    (error $ "countStepsTo: target " <> show target <> " not found")
-    $ findIndex isTarget
-    $ walkNetwork node (cycle steps)
-  where
-    isTarget Node {label} = label == target
+countStepsTo :: (Label -> Bool) -> Node -> Steps -> Int
+countStepsTo p node steps =
+  fromMaybe (error "countStepsTo: no path") $
+    findIndex (p . label) $
+      walkNetwork node (cycle steps)
 
 solve1 :: Steps -> HashMap Label Node -> Int
-solve1 steps nodeMap = countStepsTo (nodeMap ! "AAA") steps "ZZZ"
+solve1 steps nodeMap =
+  countStepsTo (== "ZZZ") (nodeMap ! "AAA") steps
+
+solve2 :: Steps -> HashMap Label Node -> Int
+solve2 steps nodeMap = foldl' lcm 1 counts
+  where
+    starts = filter (BS.isSuffixOf "A" . label) $ HashMap.elems nodeMap
+    counts = parMap rseq (\n -> countStepsTo (BS.isSuffixOf "Z") n steps) starts
