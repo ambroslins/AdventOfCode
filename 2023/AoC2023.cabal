@@ -73,3 +73,15 @@ executable AoC2023
   -- other-extensions:
   build-depends:  AoC2023
   hs-source-dirs: app
+
+benchmark AoC2023-bench
+  import:         warnings, extensions, dependencies
+  type:           exitcode-stdio-1.0
+  main-is:        Main.hs
+  ghc-options:
+    -threaded
+
+  -- other-modules:
+  -- other-extensions:
+  build-depends:  AoC2023, tasty-bench
+  hs-source-dirs: bench

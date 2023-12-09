@@ -1,4 +1,11 @@
-module AdventOfCode.Main (solve, today, solveToday, showNominalDiffTime) where
+module AdventOfCode.Main
+  ( solve,
+    solutions,
+    today,
+    solveToday,
+    readInputFile,
+  )
+where
 
 import AdventOfCode.Day01 qualified as Day01
 import AdventOfCode.Day02 qualified as Day02
@@ -9,11 +16,11 @@ import AdventOfCode.Day06 qualified as Day06
 import AdventOfCode.Day07 qualified as Day07
 import AdventOfCode.Day08 qualified as Day08
 import AdventOfCode.Day09 qualified as Day09
+import AdventOfCode.Parser (runParser)
 import AdventOfCode.Prelude
 import Control.DeepSeq (force)
 import Control.Exception (catch)
 import Control.Exception.Base (throwIO)
-import Data.Attoparsec.ByteString (endOfInput, parseOnly)
 import Data.ByteString qualified as BS
 import Data.IntMap qualified as IntMap
 import Data.Time
@@ -147,16 +154,17 @@ solve day = do
     Nothing -> putStrLn $ "No solution for day " <> show day
     Just (Solution {parser, part1, part2}) -> do
       putStrLn $ "Day " <> show day <> ":"
-      (parseResult, parseTime) <- bench (parseOnly (parser <* endOfInput)) input
-      case parseResult of
-        Left err -> putStrLn $ "Parser failed on: " <> err
-        Right x -> do
-          printf "  Parser took %s\n" (showNominalDiffTime parseTime)
-          (result1, time1) <- bench (force . part1) x
-          printf "  Part 1 (took %s): %s\n" (showNominalDiffTime time1) (show result1)
-          (result2, time2) <- bench (force . part2) x
-          printf "  Part 2 (took %s): %s\n" (showNominalDiffTime time2) (show result2)
-          printf "  Total time: %s\n" (showNominalDiffTime (parseTime + time1 + time2))
+
+      (x, parseTime) <- bench (runParser parser) input
+      printf "  Parser took %s\n" (showNominalDiffTime parseTime)
+
+      (result1, time1) <- bench (force . part1) x
+      printf "  Part 1 (took %s): %s\n" (showNominalDiffTime time1) (show result1)
+
+      (result2, time2) <- bench (force . part2) x
+      printf "  Part 2 (took %s): %s\n" (showNominalDiffTime time2) (show result2)
+
+      printf "  Total time: %s\n" (showNominalDiffTime (parseTime + time1 + time2))
 
 solveToday :: IO ()
 solveToday = today >>= solve
