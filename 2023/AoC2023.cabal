@@ -32,6 +32,7 @@ common dependencies
     , bytestring
     , containers
     , deepseq
+    , hashable
     , http-client
     , http-client-tls
     , http-types
@@ -54,7 +55,9 @@ library
     AdventOfCode.Day07
     AdventOfCode.Day08
     AdventOfCode.Day09
+    AdventOfCode.Day10
     AdventOfCode.Interval
+    AdventOfCode.Grid
     AdventOfCode.Main
     AdventOfCode.Prelude
     AdventOfCode.Parser
