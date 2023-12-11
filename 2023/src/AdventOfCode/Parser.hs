@@ -5,6 +5,7 @@ module AdventOfCode.Parser
     int,
     lexeme,
     line,
+    lines,
     symbol,
     whitespace,
   )
@@ -14,6 +15,8 @@ import Control.Applicative (Alternative (..))
 import Data.Attoparsec.ByteString qualified as Word8
 import Data.Attoparsec.ByteString.Char8
 import Data.ByteString (ByteString)
+import Data.ByteString.Char8 qualified as BS
+import Prelude hiding (lines)
 
 runParser :: Parser a -> ByteString -> a
 runParser p bs = case parseOnly (p <* endOfInput) bs of
@@ -25,6 +28,9 @@ int = signed decimal
 
 line :: Parser ByteString
 line = Word8.takeWhile1 (not . isEndOfLine)
+
+lines :: Parser [ByteString]
+lines = BS.lines <$> takeByteString
 
 whitespace :: Parser ()
 whitespace = Word8.skipWhile isHorizontalSpace
