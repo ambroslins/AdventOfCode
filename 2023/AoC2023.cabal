@@ -36,6 +36,7 @@ common dependencies
     , http-client
     , http-client-tls
     , http-types
+    , mtl
     , parallel
     , parser-combinators
     , text

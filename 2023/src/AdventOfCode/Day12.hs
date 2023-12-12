@@ -2,8 +2,13 @@ module AdventOfCode.Day12 (solution) where
 
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
+import Control.Monad.State.Strict (State)
+import Control.Monad.State.Strict qualified as State
 import Control.Parallel.Strategies (parMap, rseq)
 import Data.ByteString.Char8 qualified as BS
+import Data.HashMap.Strict qualified as HashMap
+
+type Cache = HashMap (Int, Int, Int) Int
 
 solution :: Solution
 solution =
@@ -20,24 +25,41 @@ parseLine = do
   pure (springs, groups)
 
 arrangements :: ByteString -> [Int] -> Int
-arrangements = go 0 . BS.unpack
+arrangements bs =
+  flip State.evalState HashMap.empty . go 0 bs
   where
-    go :: Int -> [Char] -> [Int] -> Int
-    go !c springs groups = case groups of
-      []
-        | '#' `elem` springs -> 0
-        | otherwise -> 1
-      (!g : gs) -> case springs of
+    go :: Int -> ByteString -> [Int] -> State Cache Int
+    go !c springs groups =
+      State.gets (HashMap.lookup key) >>= \case
+        Just n -> pure n
+        Nothing -> do
+          n <- recurse c springs groups
+          State.modify (HashMap.insert key n)
+          pure n
+      where
+        key = (c, BS.length springs, length groups)
+    recurse :: Int -> ByteString -> [Int] -> State Cache Int
+    recurse !c springs groups =
+      case groups of
         []
-          | c == g && null gs -> 1
-        '.' : rest
-          | c == 0 -> go 0 rest groups
-          | c == g -> go 0 rest gs
-        '#' : rest
-          | c < g -> go (c + 1) rest groups
-        '?' : rest ->
-          go c ('.' : rest) groups + go c ('#' : rest) groups
-        _ -> 0
+          | '#' `BS.elem` springs -> pure 0
+          | otherwise -> pure 1
+        g : gs -> case BS.uncons springs of
+          Nothing | c == g && null gs -> pure 1
+          Just ('.', rest)
+            | c == 0 -> continueOperational rest
+            | c == g -> closeGroup rest
+          Just ('#', rest)
+            | c < g -> continueGroup rest
+          Just ('?', rest)
+            | c == 0 -> (+) <$> continueGroup rest <*> continueOperational rest
+            | c == g -> closeGroup rest
+            | otherwise -> continueGroup rest
+          _ -> pure 0
+          where
+            closeGroup rest = go 0 (BS.dropWhile (== '.') rest) gs
+            continueGroup rest = go (c + 1) rest groups
+            continueOperational rest = go 0 (BS.dropWhile (== '.') rest) groups
 
 solve1 :: [(ByteString, [Int])] -> Int
 solve1 = sum . map (uncurry arrangements)
