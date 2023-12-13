@@ -7,6 +7,8 @@ import Control.Monad.State.Strict qualified as State
 import Control.Parallel.Strategies (parMap, rseq)
 import Data.ByteString.Char8 qualified as BS
 import Data.HashMap.Strict qualified as HashMap
+import Data.Vector.Unboxed (Vector)
+import Data.Vector.Unboxed qualified as Vector
 
 type Cache = HashMap (Int, Int) Int
 
@@ -18,57 +20,55 @@ solution =
       part2 = solve2
     }
 
-parseLine :: Parser (ByteString, [Int])
+parseLine :: Parser (ByteString, Vector Int)
 parseLine = do
   springs <- Parser.takeWhile1 (/= ' ') <* Parser.space
   groups <- Parser.decimal `sepEndBy'` Parser.char ','
-  pure (springs, groups)
+  pure (springs, Vector.fromList groups)
 
-arrangements :: ByteString -> [Int] -> Int
+arrangements :: ByteString -> Vector Int -> Int
 arrangements bs =
   flip State.evalState HashMap.empty . go bs
   where
-    go :: ByteString -> [Int] -> State Cache Int
-    go springs groups =
+    memo :: ByteString -> Vector Int -> State Cache Int
+    memo springs groups =
       State.gets (HashMap.lookup key) >>= \case
         Just n -> pure n
         Nothing -> do
-          n <- recurse springs groups
+          n <- go springs groups
           State.modify (HashMap.insert key n)
           pure n
       where
-        key = (BS.length springs, length groups)
-    recurse :: ByteString -> [Int] -> State Cache Int
-    recurse springs groups =
-      case groups of
-        []
-          | '#' `BS.elem` springs -> pure 0
-          | otherwise -> pure 1
-        g : gs -> case BS.uncons $ BS.dropWhile (== '.') springs of
+        key = (BS.length springs, Vector.length groups)
+    go :: ByteString -> Vector Int -> State Cache Int
+    go springs groups =
+      case Vector.uncons groups of
+        Nothing -> pure $ if '#' `BS.elem` springs then 0 else 1
+        Just (g, gs) -> case BS.uncons $ BS.dropWhile (== '.') springs of
           Just ('#', rest) -> closeGroup rest
           Just ('?', rest) -> do
             n1 <- closeGroup rest
-            n2 <- go rest groups
+            n2 <- memo rest groups
             pure (n1 + n2)
           _ -> pure 0
           where
             closeGroup rest
               | BS.length rest < g - 1 || '.' `BS.elem` damaged = pure 0
               | otherwise = case BS.uncons operational of
-                  Nothing | null gs -> pure 1
-                  Just (x, xs) | x /= '#' -> go xs gs
+                  Nothing | Vector.null gs -> pure 1
+                  Just (x, xs) | x /= '#' -> memo xs gs
                   _ -> pure 0
               where
                 (damaged, operational) = BS.splitAt (g - 1) rest
 
-solve1 :: [(ByteString, [Int])] -> Int
+solve1 :: [(ByteString, Vector Int)] -> Int
 solve1 = sum . map (uncurry arrangements)
 
-solve2 :: [(ByteString, [Int])] -> Int
+solve2 :: [(ByteString, Vector Int)] -> Int
 solve2 = sum . parMap rseq (uncurry arrangements . unfold)
 
-unfold :: (ByteString, [Int]) -> (ByteString, [Int])
+unfold :: (ByteString, Vector Int) -> (ByteString, Vector Int)
 unfold (springs, groups) =
   ( BS.intercalate "?" (replicate 5 springs),
-    concat (replicate 5 groups)
+    Vector.concat (replicate 5 groups)
   )

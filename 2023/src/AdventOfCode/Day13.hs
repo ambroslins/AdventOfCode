@@ -18,7 +18,7 @@ solution =
       part2 = solve 1
     }
 
--- | Number of different characters for each reflection line.
+-- | Number of different elements for each reflection line.
 reflections :: (Eq a, Unbox a) => [Vector a] -> [Int]
 reflections = \case
   [] -> []
@@ -29,14 +29,14 @@ reflections = \case
       let d = sum $ zipWith diff (x : xs) ys
        in d : go xs (x : ys)
 
--- | Number of different characters between two vectors.
+-- | Number of different elements between two vectors.
 diff :: (Eq a, Unbox a) => Vector a -> Vector a -> Int
 diff xs ys =
   Vector.sum $
     Vector.zipWith (\x y -> if x == y then 0 else 1) xs ys
 
 solve :: Int -> [Pattern] -> Int
-solve d = sum . map (fromMaybe 0 . notes)
+solve d = sum . mapMaybe notes
   where
     notes pattern = horizontal pattern <|> vertical pattern
     horizontal = fmap (* 100) . refs . Grid.rows
