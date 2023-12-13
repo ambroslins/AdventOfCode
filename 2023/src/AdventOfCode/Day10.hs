@@ -7,18 +7,9 @@ import AdventOfCode.Prelude
 import Data.Foldable (foldlM)
 import Data.HashSet qualified as HashSet
 import Data.List (find)
-import Data.Vector (Vector)
+import Data.Vector.Unboxed (Vector)
 
-data Tile
-  = Ground
-  | VerticalPipe
-  | HorizontalPipe
-  | NorthEastPipe
-  | NorthWestPipe
-  | SouthEastPipe
-  | SouthWestPipe
-  | Start
-  deriving (Eq, Show)
+type Tile = Char
 
 data State = State
   { position :: !Position,
@@ -29,7 +20,7 @@ data State = State
 solution :: Solution
 solution =
   Solution
-    { parser = fmap charToTile . Grid.box <$> Grid.parse,
+    { parser = Grid.parse,
       part1 = solve1,
       part2 = solve2
     }
@@ -73,7 +64,7 @@ tilesInsideLoop turn grid loop = go HashSet.empty loop
 
 findLoop :: Grid Vector Tile -> Maybe [State]
 findLoop grid = do
-  start <- Grid.findPosition (== Start) grid
+  start <- Grid.findPosition (== 'S') grid
   let paths =
         [ walk grid state
           | direction <- [North, East, South, West],
@@ -99,27 +90,16 @@ step grid State {direction, position} = do
 
 turnPipe :: Direction -> Tile -> Maybe Direction
 turnPipe dir tile = case (tile, dir) of
-  (VerticalPipe, North) -> Just North
-  (VerticalPipe, South) -> Just South
-  (HorizontalPipe, East) -> Just East
-  (HorizontalPipe, West) -> Just West
-  (NorthEastPipe, South) -> Just East
-  (NorthEastPipe, West) -> Just North
-  (NorthWestPipe, South) -> Just West
-  (NorthWestPipe, East) -> Just North
-  (SouthEastPipe, North) -> Just East
-  (SouthEastPipe, West) -> Just South
-  (SouthWestPipe, North) -> Just West
-  (SouthWestPipe, East) -> Just South
+  ('|', North) -> Just North
+  ('|', South) -> Just South
+  ('-', East) -> Just East
+  ('-', West) -> Just West
+  ('L', South) -> Just East
+  ('L', West) -> Just North
+  ('J', South) -> Just West
+  ('J', East) -> Just North
+  ('F', North) -> Just East
+  ('F', West) -> Just South
+  ('7', North) -> Just West
+  ('7', East) -> Just South
   _ -> Nothing
-
-charToTile :: Char -> Tile
-charToTile = \case
-  '|' -> VerticalPipe
-  '-' -> HorizontalPipe
-  'L' -> NorthEastPipe
-  'J' -> NorthWestPipe
-  '7' -> SouthWestPipe
-  'F' -> SouthEastPipe
-  'S' -> Start
-  _ -> Ground
