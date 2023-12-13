@@ -9,6 +9,8 @@ module AdventOfCode.Prelude
     NFData,
     Parser,
     Set,
+    Position (..),
+    Direction (..),
     module Control.Applicative.Combinators,
     module Control.Applicative.Combinators.NonEmpty,
     module Control.Monad,
@@ -29,6 +31,7 @@ module AdventOfCode.Prelude
   )
 where
 
+import AdventOfCode.Position (Direction (..), Position (..))
 import Control.Applicative.Combinators hiding
   ( count,
     endBy1,
@@ -72,7 +75,7 @@ sepEndBy' p sep = sepBy' p sep <* optional sep
 sepEndBy1' :: Parser a -> Parser b -> Parser (NonEmpty a)
 sepEndBy1' p sep = do
   !x <- p
-  xs <- sepEndBy' p sep
+  xs <- (sep *> sepEndBy' p sep) <|> pure []
   pure (x :| xs)
 
 count :: (Foldable f) => (a -> Bool) -> f a -> Int

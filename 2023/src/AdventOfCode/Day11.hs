@@ -1,6 +1,5 @@
 module AdventOfCode.Day11 (solution) where
 
-import AdventOfCode.Grid (Position (..))
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
 import Data.ByteString.Char8 qualified as BS

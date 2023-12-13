@@ -1,11 +1,13 @@
 module AdventOfCode.Day10 (solution) where
 
-import AdventOfCode.Grid (Direction (..), Grid, Position (..))
+import AdventOfCode.Grid (Grid)
 import AdventOfCode.Grid qualified as Grid
+import AdventOfCode.Position qualified as Pos
 import AdventOfCode.Prelude
 import Data.Foldable (foldlM)
 import Data.HashSet qualified as HashSet
 import Data.List (find)
+import Data.Vector (Vector)
 
 data Tile
   = Ground
@@ -27,28 +29,28 @@ data State = State
 solution :: Solution
 solution =
   Solution
-    { parser = fmap charToTile <$> Grid.parse,
+    { parser = fmap charToTile . Grid.box <$> Grid.parse,
       part1 = solve1,
       part2 = solve2
     }
 
-solve1 :: Grid Tile -> Int
+solve1 :: Grid Vector Tile -> Int
 solve1 grid = length loop `div` 2
   where
     loop = fromMaybe (error "solve1: no loop found") $ findLoop grid
 
-solve2 :: Grid Tile -> Int
+solve2 :: Grid Vector Tile -> Int
 solve2 grid =
   maybe (error "solve2: no tiles inside loop") HashSet.size $
     tilesLeft <|> tilesRight
   where
     loop = fromMaybe (error "solve2: no loop gound") $ findLoop grid
-    tilesLeft = tilesInsideLoop Grid.turnLeft grid loop
-    tilesRight = tilesInsideLoop Grid.turnRight grid loop
+    tilesLeft = tilesInsideLoop Pos.turnLeft grid loop
+    tilesRight = tilesInsideLoop Pos.turnRight grid loop
 
 tilesInsideLoop ::
   (Direction -> Direction) ->
-  Grid Tile ->
+  Grid Vector Tile ->
   [State] ->
   Maybe (HashSet Position)
 tilesInsideLoop turn grid loop = go HashSet.empty loop
@@ -57,19 +59,19 @@ tilesInsideLoop turn grid loop = go HashSet.empty loop
     go tiles = \case
       [] -> Just tiles
       State {position, direction} : rest -> do
-        let nextPos = Grid.move direction position
+        let nextPos = Pos.move direction position
             dir = turn direction
-        ts <- foldlM flood tiles [Grid.move dir position, Grid.move dir nextPos]
+        ts <- foldlM flood tiles [Pos.move dir position, Pos.move dir nextPos]
         go ts rest
     flood :: HashSet Position -> Position -> Maybe (HashSet Position)
     flood tiles pos
       | pos `HashSet.member` tiles || pos `HashSet.member` onLoop = Just tiles
       | pos `Grid.inside` grid =
           foldlM flood (HashSet.insert pos tiles) $
-            [Grid.move dir pos | dir <- [North, East, South, West]]
+            [Pos.move dir pos | dir <- [North, East, South, West]]
       | otherwise = Nothing
 
-findLoop :: Grid Tile -> Maybe [State]
+findLoop :: Grid Vector Tile -> Maybe [State]
 findLoop grid = do
   start <- Grid.findPosition (== Start) grid
   let paths =
@@ -82,18 +84,18 @@ findLoop grid = do
         _ -> False
   find isLoop paths
 
-walk :: Grid Tile -> State -> [State]
+walk :: Grid Vector Tile -> State -> [State]
 walk grid state = case step grid state of
   Nothing -> [state]
   Just state' -> state : walk grid state'
 
-step :: Grid Tile -> State -> Maybe State
+step :: Grid Vector Tile -> State -> Maybe State
 step grid State {direction, position} = do
   tile <- Grid.index grid pos
   dir <- turnPipe direction tile
   pure State {position = pos, direction = dir}
   where
-    pos = Grid.move direction position
+    pos = Pos.move direction position
 
 turnPipe :: Direction -> Tile -> Maybe Direction
 turnPipe dir tile = case (tile, dir) of

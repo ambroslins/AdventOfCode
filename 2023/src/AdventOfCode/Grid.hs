@@ -3,97 +3,78 @@ module AdventOfCode.Grid
     Direction (..),
     Position (..),
     parse,
-    rows,
-    cols,
+    nrow,
+    ncol,
+    sliceRow,
+    sliceCol,
+    box,
     inside,
     index,
     unsafeIndex,
     findPosition,
-    move,
-    turnRight,
-    turnLeft,
   )
 where
 
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
-import Control.DeepSeq (NFData (..))
 import Control.Monad (when)
 import Data.ByteString.Char8 qualified as BS
-import Data.Hashable (Hashable (hashWithSalt))
+import Data.List qualified as List
+import Data.Vector qualified as Boxed
+import Data.Vector.Generic (Vector)
+import Data.Vector.Generic qualified as Vector
+import Data.Vector.Unboxed qualified as Unboxed
+import Prelude hiding (map)
 
-data Direction = North | East | South | West
-  deriving (Eq, Show)
-
-instance NFData Direction where
-  rnf d = d `seq` ()
-
-data Position = Position {row :: !Int, col :: !Int}
-  deriving (Eq, Show)
-
-instance Hashable Position where
-  hashWithSalt salt Position {row, col} = hashWithSalt salt (row, col)
-
-instance NFData Position where
-  rnf p = p `seq` ()
-
-data Grid a = Grid
-  { cols :: !Int,
-    rows :: !Int,
-    cells :: !ByteString,
-    cell :: Char -> a
+data Grid v a = Grid
+  { ncol :: !Int,
+    nrow :: !Int,
+    cells :: !(v a)
   }
   deriving (Functor)
 
-parse :: Parser (Grid Char)
+parse :: Parser (Grid Unboxed.Vector Char)
 parse = do
-  cells <- Parser.takeByteString
-  let rows = BS.count '\n' cells
-      (cols, rest) = BS.length cells `divMod` rows
+  r :| rs <- Parser.line `sepEndBy1'` Parser.endOfLine
+  let ncol = BS.length r
+      cells = Unboxed.concat $ List.map bsToVector (r : rs)
+      (nrow, rest) = Unboxed.length cells `divMod` ncol
   when (rest /= 0) $ fail "Grid is not rectangular"
-  pure $ Grid {cols = cols - 1, rows, cells, cell = id}
+  pure $ Grid {ncol, nrow, cells}
 
-inside :: Position -> Grid a -> Bool
-inside Position {row, col} Grid {rows, cols} =
-  row >= 0 && row < rows && col >= 0 && col < cols
+bsToVector :: BS.ByteString -> Unboxed.Vector Char
+bsToVector bs = Unboxed.generate (BS.length bs) (BS.index bs)
 
-index :: Grid a -> Position -> Maybe a
+box :: (Vector Unboxed.Vector a) => Grid Unboxed.Vector a -> Grid Boxed.Vector a
+box grid = grid {cells = Vector.convert $ cells grid}
+
+sliceRow :: (Vector v a) => Int -> Grid v a -> Maybe (v a)
+sliceRow i Grid {nrow, ncol, cells}
+  | i >= 0 && i < nrow = Just $ Vector.slice (i * ncol) ncol cells
+  | otherwise = Nothing
+
+sliceCol :: (Vector v a) => Int -> Grid v a -> Maybe (v a)
+sliceCol i Grid {nrow, ncol, cells}
+  | i >= 0 && i < ncol = Just $ Vector.generate nrow (\r -> cells Vector.! (r * ncol + i))
+  | otherwise = Nothing
+
+inside :: Position -> Grid v a -> Bool
+inside Position {row, col} Grid {nrow, ncol} =
+  row >= 0 && row < nrow && col >= 0 && col < ncol
+
+index :: (Vector v a) => Grid v a -> Position -> Maybe a
 index grid position
   | inside position grid = Just $ unsafeIndex grid position
   | otherwise = Nothing
 
-unsafeIndex :: Grid a -> Position -> a
-unsafeIndex Grid {cols, cells, cell} Position {row, col} =
-  cell $ BS.index cells (row * (cols + 1) + col) -- +1 for the newline
+unsafeIndex :: (Vector v a) => Grid v a -> Position -> a
+unsafeIndex Grid {ncol, cells} Position {row, col} =
+  cells Vector.! (row * ncol + col)
 
-findPosition :: (a -> Bool) -> Grid a -> Maybe Position
-findPosition p Grid {cols, cell, cells} =
-  case BS.findIndex p' cells of
+findPosition :: (Vector v a) => (a -> Bool) -> Grid v a -> Maybe Position
+findPosition p Grid {ncol, cells} =
+  case Vector.findIndex p cells of
     Nothing -> Nothing
     Just i ->
-      let (row, col) = i `divMod` (cols + 1)
-       in Just Position {row, col}
-  where
-    p' c = (c /= '\n') && p (cell c)
-
-move :: Direction -> Position -> Position
-move dir Position {row, col} =
-  case dir of
-    North -> Position {row = row - 1, col}
-    East -> Position {row, col = col + 1}
-    South -> Position {row = row + 1, col}
-    West -> Position {row, col = col - 1}
-
-turnRight :: Direction -> Direction
-turnRight = \case
-  North -> East
-  East -> South
-  South -> West
-  West -> North
-
-turnLeft :: Direction -> Direction
-turnLeft = \case
-  North -> West
-  East -> North
-  South -> East
-  West -> South
+      let (row, col) = i `divMod` ncol
+       in Just $! Position {row, col}
