@@ -4,29 +4,41 @@ import AdventOfCode.Grid (Grid)
 import AdventOfCode.Grid qualified as Grid
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
-import Data.Vector.Unboxed (Vector)
+import Data.List qualified as List
+import Data.Vector.Unboxed (Unbox, Vector)
+import Data.Vector.Unboxed qualified as Vector
+
+type Pattern = Grid Vector Char
 
 solution :: Solution
 solution =
   Solution
     { parser = Grid.parse `sepEndBy'` Parser.endOfLine,
-      part1 = solve1,
-      part2 = map Grid.ncols
+      part1 = solve 0,
+      part2 = solve 1
     }
 
-reflections :: [Vector Char] -> Maybe Int
-reflections ls = go 0 ls []
+-- | Number of different characters for each reflection line.
+reflections :: (Eq a, Unbox a) => [Vector a] -> [Int]
+reflections = \case
+  [] -> []
+  x : xs -> go xs [x]
   where
-    go _ [] _ = Nothing
-    go !i (x : xs) ys
-      | null ys = go (i + 1) xs [x]
-      | doesReflect = Just i
-      | otherwise = go (i + 1) xs (x : ys)
-      where
-        doesReflect = and $ zipWith (==) (x : xs) ys
+    go [] _ = []
+    go (x : xs) ys =
+      let d = sum $ zipWith diff (x : xs) ys
+       in d : go xs (x : ys)
 
-solve1 :: [Grid Vector Char] -> Int
-solve1 = sum . map (\grid -> horizontal grid + vertical grid)
+-- | Number of different characters between two vectors.
+diff :: (Eq a, Unbox a) => Vector a -> Vector a -> Int
+diff xs ys =
+  Vector.sum $
+    Vector.zipWith (\x y -> if x == y then 0 else 1) xs ys
+
+solve :: Int -> [Pattern] -> Int
+solve d = sum . map (fromMaybe 0 . notes)
   where
-    horizontal = maybe 0 (* 100) . reflections . Grid.rows
-    vertical = fromMaybe 0 . reflections . Grid.cols
+    notes pattern = horizontal pattern <|> vertical pattern
+    horizontal = fmap (* 100) . refs . Grid.rows
+    vertical = refs . Grid.cols
+    refs = fmap (+ 1) . List.elemIndex d . reflections
