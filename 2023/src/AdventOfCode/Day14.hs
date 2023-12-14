@@ -22,13 +22,14 @@ solve1 = sum . map (load . roll) . Grid.cols
 
 solve2 :: Grid Vector Char -> Int
 solve2 grid =
-  case findLoop $ map (Vector.elemIndices 'O' . Grid.cells) cycles of
-    Nothing -> error "No loop found"
-    Just (n, m) ->
-      let k = (1_000_000_000 - m) `mod` n
-       in totalLoad $ cycles !! (k + m)
+  totalLoad $
+    case findLoop $ map (Vector.elemIndices 'O' . Grid.cells) cycles of
+      Nothing -> last cycles
+      Just (loopLength, loopStart) ->
+        cycles !! (((n - loopStart) `mod` loopLength) + loopStart)
   where
-    cycles = iterate cycle grid
+    cycles = take (n + 1) $ iterate cycle grid
+    n = 1_000_000_000
 
 load :: Vector Char -> Int
 load v = Vector.sum $ Vector.imap f v
