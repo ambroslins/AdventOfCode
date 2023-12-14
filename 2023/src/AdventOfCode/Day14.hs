@@ -3,7 +3,7 @@ module AdventOfCode.Day14 (solution) where
 import AdventOfCode.Grid (Grid)
 import AdventOfCode.Grid qualified as Grid
 import AdventOfCode.Prelude
-import Data.HashMap.Strict qualified as HashMap
+import Data.Map.Strict qualified as Map
 import Data.Vector.Unboxed (Vector)
 import Data.Vector.Unboxed qualified as Vector
 import Data.Vector.Unboxed.Mutable qualified as MVector
@@ -22,7 +22,7 @@ solve1 = sum . map (load . roll) . Grid.cols
 
 solve2 :: Grid Vector Char -> Int
 solve2 grid =
-  case findLoop $ map (Grid.findPositions (== 'O')) cycles of
+  case findLoop $ map (Vector.elemIndices 'O' . Grid.cells) cycles of
     Nothing -> error "No loop found"
     Just (n, m) ->
       let k = (1_000_000_000 - m) `mod` n
@@ -58,12 +58,12 @@ cycle = east . south . west . north
     south = Grid.fromCols . map reverseRoll . Grid.cols
     east = Grid.fromRows . map reverseRoll . Grid.rows
 
-findLoop :: (Hashable a) => [a] -> Maybe (Int, Int)
-findLoop = go HashMap.empty 0
+findLoop :: (Ord a) => [a] -> Maybe (Int, Int)
+findLoop = go Map.empty 0
   where
     go seen !i = \case
       [] -> Nothing
       x : xs ->
-        case HashMap.lookup x seen of
+        case Map.lookup x seen of
           Just j -> Just (i - j, j)
-          Nothing -> go (HashMap.insert x i seen) (i + 1) xs
+          Nothing -> go (Map.insert x i seen) (i + 1) xs

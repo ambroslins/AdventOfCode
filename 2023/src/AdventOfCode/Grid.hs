@@ -8,6 +8,7 @@ module AdventOfCode.Grid
     transpose,
     nrows,
     ncols,
+    cells,
     row,
     col,
     rows,
@@ -131,8 +132,13 @@ findPosition p Grid {ncols, cells} =
       let (r, c) = i `divMod` ncols
        in Just $! Position r c
 
-findPositions :: (Vector v a, Vector v Int) => (a -> Bool) -> Grid v a -> [Position]
+findPositions ::
+  (Vector v a, Vector v Int) =>
+  (a -> Bool) ->
+  Grid v a ->
+  Unboxed.Vector Position
 findPositions p Grid {ncols, cells} =
-  List.map (\i -> let (r, c) = i `divMod` ncols in Position r c) $
-    Vector.toList $
+  Vector.map (\i -> let (r, c) = i `divMod` ncols in Position r c) $
+    Vector.convert $
       Vector.findIndices p cells
+{-# INLINE findPositions #-}
