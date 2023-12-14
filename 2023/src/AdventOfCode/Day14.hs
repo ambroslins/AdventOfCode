@@ -32,10 +32,9 @@ solve2 grid =
     n = 1_000_000_000
 
 load :: Vector Char -> Int
-load v = Vector.sum $ Vector.imap f v
+load v = Vector.sum $ Vector.map (l -) $ Vector.elemIndices 'O' v
   where
     l = Vector.length v
-    f i r = if r == 'O' then l - i else 0
 
 totalLoad :: Grid Vector Char -> Int
 totalLoad = sum . map load . Grid.cols
