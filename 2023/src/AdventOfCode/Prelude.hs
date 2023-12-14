@@ -4,6 +4,7 @@ module AdventOfCode.Prelude
     Generic,
     HashMap,
     HashSet,
+    Hashable,
     IntMap,
     Map,
     NFData,
@@ -53,6 +54,7 @@ import Data.Function (fix, on, (&))
 import Data.Functor (($>), (<$), (<&>))
 import Data.HashMap.Strict (HashMap)
 import Data.HashSet (HashSet)
+import Data.Hashable (Hashable)
 import Data.IntMap (IntMap)
 import Data.List (sortBy, sortOn)
 import Data.List.NonEmpty (NonEmpty (..), nonEmpty)

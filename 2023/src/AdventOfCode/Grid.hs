@@ -3,6 +3,9 @@ module AdventOfCode.Grid
     Direction (..),
     Position (..),
     parse,
+    fromRows,
+    fromCols,
+    transpose,
     nrows,
     ncols,
     row,
@@ -14,6 +17,7 @@ module AdventOfCode.Grid
     index,
     unsafeIndex,
     findPosition,
+    findPositions,
   )
 where
 
@@ -42,6 +46,20 @@ parse = do
       (nrows, rest) = Unboxed.length cells `divMod` ncols
   when (rest /= 0) $ fail "Grid is not rectangular"
   pure $ Grid {ncols, nrows, cells}
+
+fromRows :: (Vector v a) => [v a] -> Grid v a
+fromRows = \case
+  [] -> Grid {ncols = 0, nrows = 0, cells = Vector.empty}
+  (r : rs)
+    | rest == 0 -> Grid {ncols, nrows, cells}
+    | otherwise -> error "Grid is not rectangular"
+    where
+      ncols = Vector.length r
+      (nrows, rest) = Vector.length cells `divMod` ncols
+      cells = Vector.concat (r : rs)
+
+fromCols :: (Vector v a) => [v a] -> Grid v a
+fromCols = transpose . fromRows
 
 byteStringToVector :: BS.ByteString -> Unboxed.Vector Char
 byteStringToVector bs = Unboxed.generate (BS.length bs) (BS.index bs)
@@ -73,6 +91,16 @@ unsafeCol i Grid {nrows, ncols, cells} =
 cols :: (Vector v a) => Grid v a -> [v a]
 cols grid = List.map (`unsafeCol` grid) [0 .. ncols grid - 1]
 
+transpose :: (Vector v a) => Grid v a -> Grid v a
+transpose Grid {ncols, nrows, cells} =
+  Grid
+    { ncols = nrows,
+      nrows = ncols,
+      cells = Vector.generate (ncols * nrows) f
+    }
+  where
+    f i = let (r, c) = i `divMod` ncols in cells Vector.! (c * nrows + r)
+
 inside :: Position -> Grid v a -> Bool
 inside (Position r c) Grid {nrows, ncols} =
   r >= 0 && r < nrows && c >= 0 && c < ncols
@@ -93,3 +121,9 @@ findPosition p Grid {ncols, cells} =
     Just i ->
       let (r, c) = i `divMod` ncols
        in Just $! Position r c
+
+findPositions :: (Vector v a, Vector v Int) => (a -> Bool) -> Grid v a -> [Position]
+findPositions p Grid {ncols, cells} =
+  List.map (\i -> let (r, c) = i `divMod` ncols in Position r c) $
+    Vector.toList $
+      Vector.findIndices p cells
