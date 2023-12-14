@@ -57,9 +57,11 @@ fromRows = \case
       ncols = Vector.length r
       (nrows, rest) = Vector.length cells `divMod` ncols
       cells = Vector.concat (r : rs)
+{-# INLINE fromRows #-}
 
 fromCols :: (Vector v a) => [v a] -> Grid v a
 fromCols = transpose . fromRows
+{-# INLINE fromCols #-}
 
 byteStringToVector :: BS.ByteString -> Unboxed.Vector Char
 byteStringToVector bs = Unboxed.generate (BS.length bs) (BS.index bs)
@@ -71,25 +73,31 @@ row :: (Vector v a) => Int -> Grid v a -> Maybe (v a)
 row i grid
   | i >= 0 && i < nrows grid = Just $ unsafeRow i grid
   | otherwise = Nothing
+{-# INLINE row #-}
 
 unsafeRow :: (Vector v a) => Int -> Grid v a -> v a
 unsafeRow i Grid {ncols, cells} =
   Vector.slice (i * ncols) ncols cells
+{-# INLINE unsafeRow #-}
 
 rows :: (Vector v a) => Grid v a -> [v a]
 rows grid = List.map (`unsafeRow` grid) [0 .. nrows grid - 1]
+{-# INLINE rows #-}
 
 col :: (Vector v a) => Int -> Grid v a -> Maybe (v a)
 col i grid
   | i >= 0 && i < ncols grid = Just $ unsafeCol i grid
   | otherwise = Nothing
+{-# INLINE col #-}
 
 unsafeCol :: (Vector v a) => Int -> Grid v a -> v a
 unsafeCol i Grid {nrows, ncols, cells} =
   Vector.generate nrows (\r -> cells Vector.! (r * ncols + i))
+{-# INLINE unsafeCol #-}
 
 cols :: (Vector v a) => Grid v a -> [v a]
 cols grid = List.map (`unsafeCol` grid) [0 .. ncols grid - 1]
+{-# INLINE cols #-}
 
 transpose :: (Vector v a) => Grid v a -> Grid v a
 transpose Grid {ncols, nrows, cells} =
@@ -100,6 +108,7 @@ transpose Grid {ncols, nrows, cells} =
     }
   where
     f i = let (r, c) = i `divMod` ncols in cells Vector.! (c * nrows + r)
+{-# INLINE transpose #-}
 
 inside :: Position -> Grid v a -> Bool
 inside (Position r c) Grid {nrows, ncols} =

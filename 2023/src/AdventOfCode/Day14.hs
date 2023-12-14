@@ -31,10 +31,10 @@ solve2 grid =
     cycles = iterate cycle grid
 
 load :: Vector Char -> Int
-load v = Vector.ifoldl' f 0 v
+load v = Vector.sum $ Vector.imap f v
   where
     l = Vector.length v
-    f acc i r = acc + (if r == 'O' then l - i else 0)
+    f i r = if r == 'O' then l - i else 0
 
 totalLoad :: Grid Vector Char -> Int
 totalLoad = sum . map load . Grid.cols
