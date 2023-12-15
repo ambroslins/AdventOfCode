@@ -22,13 +22,13 @@ data Operation = Delete !Label | Insert !Label !Int
 solution :: Solution
 solution =
   Solution
-    { parser = parseOperation `sepEndBy'` Parser.char ',' <* Parser.endOfLine,
-      part1 = solve1,
-      part2 = solve2
+    { parser = Parser.match parseOperation `sepEndBy'` Parser.char ',' <* Parser.endOfLine,
+      part1 = solve1 . map fst,
+      part2 = solve2 . map snd
     }
 
-solve1 :: [Operation] -> Int
-solve1 = sum . map (hash . label)
+solve1 :: [ByteString] -> Int
+solve1 = sum . map hash
 
 solve2 :: [Operation] -> Int
 solve2 operations = focusingPower $ Vector.create $ do
@@ -42,11 +42,6 @@ parseOperation = do
   (Delete l <$ Parser.char '-')
     <|> (Insert l <$> (Parser.char '=' *> Parser.decimal))
 
-label :: Operation -> Label
-label = \case
-  Delete l -> l
-  Insert l _ -> l
-
 hash :: Label -> Int
 hash = BS.foldl' (\value c -> ((value + ord c) * 17) `mod` 256) 0
 
@@ -59,8 +54,17 @@ focusingPower = Vector.sum . Vector.imap box
 
 apply :: MVector s Box -> Operation -> ST s ()
 apply v = \case
-  Delete l -> MVector.write v (hash l) []
+  Delete l -> MVector.modify v (delete l) (hash l)
   Insert l focalLength -> MVector.modify v (insert l focalLength) (hash l)
+
+delete :: Label -> Box -> Box
+delete l = go
+  where
+    go = \case
+      [] -> []
+      x@(l', _) : xs
+        | l == l' -> xs
+        | otherwise -> x : go xs
 
 insert :: Label -> Int -> Box -> Box
 insert l focalLength = go
