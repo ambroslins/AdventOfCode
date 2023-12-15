@@ -2,63 +2,71 @@ module AdventOfCode.Day15 (solution) where
 
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
+import Control.Monad.ST.Strict (ST)
 import Data.ByteString.Char8 qualified as BS
-import Data.Char (isAlphaNum, isAsciiLower, ord)
-import Data.HashMap.Strict qualified as HashMap
+import Data.Char (isAsciiLower, ord)
+import Data.Foldable (traverse_)
+import Data.Vector (MVector, Vector)
+import Data.Vector qualified as Vector
+import Data.Vector.Mutable qualified as MVector
 
-type Lens = (ByteString, Int)
+type Label = ByteString
+
+type Lens = (Label, Int)
 
 type Box = [Lens]
+
+data Operation = Delete !Label | Insert !Label !Int
+  deriving (Eq, Show)
 
 solution :: Solution
 solution =
   Solution
-    { parser = initalization `sepEndBy` Parser.char ',' <* Parser.endOfLine,
+    { parser = parseOperation `sepEndBy'` Parser.char ',' <* Parser.endOfLine,
       part1 = solve1,
       part2 = solve2
     }
 
-solve1 :: [ByteString] -> Int
-solve1 = sum . map hash
+solve1 :: [Operation] -> Int
+solve1 = sum . map (hash . label)
 
-solve2 :: [ByteString] -> Int
-solve2 = focusingPower . foldl' (flip step) HashMap.empty
+solve2 :: [Operation] -> Int
+solve2 operations = focusingPower $ Vector.create $ do
+  boxes <- MVector.replicate 256 []
+  traverse_ (apply boxes) operations
+  pure boxes
 
-initalization :: Parser ByteString
-initalization =
-  Parser.takeWhile1 (\c -> isAlphaNum c || c == '-' || c == '=')
+parseOperation :: Parser Operation
+parseOperation = do
+  !l <- Parser.takeWhile1 isAsciiLower
+  (Delete l <$ Parser.char '-')
+    <|> (Insert l <$> (Parser.char '=' *> Parser.decimal))
 
-hash :: ByteString -> Int
-hash = BS.foldl' go 0
+label :: Operation -> Label
+label = \case
+  Delete l -> l
+  Insert l _ -> l
+
+hash :: Label -> Int
+hash = BS.foldl' (\value c -> ((value + ord c) * 17) `mod` 256) 0
+
+focusingPower :: Vector Box -> Int
+focusingPower = Vector.sum . Vector.imap box
   where
-    go value c = ((value + ord c) * 17) `mod` 256
+    box n lenses =
+      sum $
+        zipWith (\i (_, l) -> (n + 1) * i * l) [1 ..] lenses
 
-focusingPower :: HashMap Int Box -> Int
-focusingPower = sum . map box . HashMap.toList
+apply :: MVector s Box -> Operation -> ST s ()
+apply v = \case
+  Delete l -> MVector.write v (hash l) []
+  Insert l focalLength -> MVector.modify v (insert l focalLength) (hash l)
+
+insert :: Label -> Int -> Box -> Box
+insert l focalLength = go
   where
-    box (k, v) = sum $ zipWith (\i (_, l) -> (k + 1) * i * l) [1 ..] v
-
-step :: ByteString -> HashMap Int Box -> HashMap Int Box
-step s = HashMap.alter operation (hash label)
-  where
-    (label, rest) = BS.span isAsciiLower s
-    operation = case BS.uncons rest of
-      Just ('-', _) -> \case
-        Nothing -> Nothing
-        Just xs ->
-          let ys = filter ((/= label) . fst) xs
-           in if null ys then Nothing else pure ys
-      Just ('=', focalLength) ->
-        case BS.readInt focalLength of
-          Nothing -> error "invalid focal length"
-          Just (f, _) -> \case
-            Nothing -> pure [(label, f)]
-            Just xs -> pure $ insert label f xs
-      _ -> error "invalid operation"
-
-insert :: ByteString -> Int -> Box -> Box
-insert label focalLength = \case
-  [] -> [(label, focalLength)]
-  x@(l, _) : xs
-    | l == label -> (l, focalLength) : xs
-    | otherwise -> x : insert label focalLength xs
+    go = \case
+      [] -> [(l, focalLength)]
+      x@(l', _) : xs
+        | l == l' -> (l, focalLength) : xs
+        | otherwise -> x : go xs
