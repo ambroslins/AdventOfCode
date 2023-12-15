@@ -7,7 +7,6 @@ import Data.ByteString.Char8 qualified as BS
 import Data.Char (isAsciiUpper)
 import Data.HashMap.Strict ((!))
 import Data.HashMap.Strict qualified as HashMap
-import Data.List (findIndex, scanl')
 
 type Steps = [Node -> Node]
 
@@ -59,14 +58,14 @@ makeNodeMap nodes = nodeMap
         Node {label, left = nodeMap ! l, right = nodeMap ! r}
       )
 
-walkNetwork :: Node -> Steps -> [Node]
-walkNetwork = scanl' (flip ($))
-
 countStepsTo :: (Label -> Bool) -> Node -> Steps -> Int
-countStepsTo p node steps =
-  fromMaybe (error "countStepsTo: no path") $
-    findIndex (p . label) $
-      walkNetwork node (cycle steps)
+countStepsTo p node steps = go 0 node steps
+  where
+    go !i n = \case
+      [] -> go i n steps
+      (x : xs)
+        | p (label n) -> i
+        | otherwise -> go (i + 1) (x n) xs
 
 solve1 :: Steps -> HashMap Label Node -> Int
 solve1 steps nodeMap =
