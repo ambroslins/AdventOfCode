@@ -10,7 +10,7 @@ import Data.HashMap.Strict qualified as HashMap
 import Data.Vector.Unboxed (Vector)
 import Data.Vector.Unboxed qualified as Vector
 
-type Cache = HashMap (Int, Int) Int
+type Cache = HashMap Int Int
 
 solution :: Solution
 solution =
@@ -39,7 +39,7 @@ arrangements bs =
           State.modify (HashMap.insert key n)
           pure n
       where
-        key = (BS.length springs, Vector.length groups)
+        key = BS.length springs + Vector.length groups * (BS.length bs + 1)
     go :: ByteString -> Vector Int -> State Cache Int
     go springs groups =
       case Vector.uncons groups of
