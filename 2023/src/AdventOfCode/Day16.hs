@@ -5,6 +5,7 @@ import AdventOfCode.Grid qualified as Grid
 import AdventOfCode.Position qualified as Position
 import AdventOfCode.Prelude
 import AdventOfCode.Search qualified as Search
+import Control.Parallel.Strategies (parMap, rseq)
 import Data.HashSet qualified as HashSet
 import Data.Vector.Unboxed (Vector)
 
@@ -20,7 +21,7 @@ solve1 :: Grid Vector Char -> Int
 solve1 grid = energizedTiles grid (Position {row = 0, col = 0}, East)
 
 solve2 :: Grid Vector Char -> Int
-solve2 grid = maximum $ map (energizedTiles grid) starts
+solve2 grid = maximum $ parMap rseq (energizedTiles grid) starts
   where
     starts = top <> bottom <> left <> right
     top = [(Position {row = 0, col}, South) | col <- [0 .. c]]
