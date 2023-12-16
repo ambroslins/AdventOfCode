@@ -62,12 +62,14 @@ library
     AdventOfCode.Day13
     AdventOfCode.Day14
     AdventOfCode.Day15
+    AdventOfCode.Day16
     AdventOfCode.Interval
     AdventOfCode.Grid
     AdventOfCode.Main
-    AdventOfCode.Prelude
     AdventOfCode.Parser
     AdventOfCode.Position
+    AdventOfCode.Prelude
+    AdventOfCode.Search
 
   -- other-modules:
   -- other-extensions:

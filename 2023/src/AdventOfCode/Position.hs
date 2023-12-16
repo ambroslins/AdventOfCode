@@ -18,7 +18,10 @@ import Data.Vector.Unboxed.Mutable (MVector)
 import Prelude hiding (map)
 
 data Direction = North | East | South | West
-  deriving (Eq, Show)
+  deriving (Eq, Show, Enum)
+
+instance Hashable Direction where
+  hashWithSalt salt = hashWithSalt salt . fromEnum
 
 instance NFData Direction where
   rnf d = d `seq` ()
