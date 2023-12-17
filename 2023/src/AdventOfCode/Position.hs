@@ -6,6 +6,8 @@ module AdventOfCode.Position
     move,
     turnRight,
     turnLeft,
+    origin,
+    toTuple,
   )
 where
 
@@ -56,6 +58,9 @@ turnLeft = \case
   East -> North
   South -> East
   West -> South
+
+origin :: Position
+origin = Position {row = 0, col = 0}
 
 toTuple :: Position -> (Int, Int)
 toTuple Position {row, col} = (row, col)

@@ -39,6 +39,7 @@ common dependencies
     , mtl
     , parallel
     , parser-combinators
+    , pqueue
     , text
     , time
     , unordered-containers
@@ -63,6 +64,7 @@ library
     AdventOfCode.Day14
     AdventOfCode.Day15
     AdventOfCode.Day16
+    AdventOfCode.Day17
     AdventOfCode.Interval
     AdventOfCode.Grid
     AdventOfCode.Main

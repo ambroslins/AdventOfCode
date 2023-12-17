@@ -3,6 +3,7 @@ module AdventOfCode.Grid
     Direction (..),
     Position (..),
     parse,
+    map,
     fromRows,
     fromCols,
     transpose,
@@ -31,6 +32,7 @@ import Data.Vector qualified as Boxed
 import Data.Vector.Generic (Vector)
 import Data.Vector.Generic qualified as Vector
 import Data.Vector.Unboxed qualified as Unboxed
+import Prelude hiding (map)
 
 data Grid v a = Grid
   { ncols :: !Int,
@@ -47,6 +49,10 @@ parse = do
       (nrows, rest) = Unboxed.length cells `divMod` ncols
   when (rest /= 0) $ fail "Grid is not rectangular"
   pure $ Grid {ncols, nrows, cells}
+
+map :: (Vector v a, Vector v b) => (a -> b) -> Grid v a -> Grid v b
+map f grid = grid {cells = Vector.map f (cells grid)}
+{-# INLINE map #-}
 
 fromRows :: (Vector v a) => [v a] -> Grid v a
 fromRows = \case
