@@ -4,6 +4,7 @@ module AdventOfCode.Position
   ( Direction (..),
     Position (..),
     move,
+    moveN,
     turnRight,
     turnLeft,
     origin,
@@ -38,12 +39,15 @@ instance NFData Position where
   rnf p = p `seq` ()
 
 move :: Direction -> Position -> Position
-move dir Position {row, col} =
+move dir = moveN dir 1
+
+moveN :: Direction -> Int -> Position -> Position
+moveN dir n Position {row, col} =
   case dir of
-    North -> Position {row = row - 1, col}
-    East -> Position {row, col = col + 1}
-    South -> Position {row = row + 1, col}
-    West -> Position {row, col = col - 1}
+    North -> Position {row = row - n, col}
+    East -> Position {row, col = col + n}
+    South -> Position {row = row + n, col}
+    West -> Position {row, col = col - n}
 
 turnRight :: Direction -> Direction
 turnRight = \case
