@@ -32,6 +32,7 @@ common dependencies
     , bytestring
     , containers
     , deepseq
+    , deque
     , hashable
     , http-client
     , http-client-tls
@@ -67,6 +68,7 @@ library
     AdventOfCode.Day17
     AdventOfCode.Day18
     AdventOfCode.Day19
+    AdventOfCode.Day20
     AdventOfCode.Interval
     AdventOfCode.Grid
     AdventOfCode.Main
