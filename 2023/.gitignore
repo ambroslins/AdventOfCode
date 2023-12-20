@@ -1,4 +1,4 @@
 dist-newstyle/
 inputs/
 cookie
-benchmarks/*.csv
+*.csv
