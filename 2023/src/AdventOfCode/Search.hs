@@ -5,6 +5,8 @@ import Data.HashMap.Internal qualified as HashMap
 import Data.HashSet qualified as HashSet
 import Data.PQueue.Prio.Min (MinPQueue (..))
 import Data.PQueue.Prio.Min qualified as PQueue
+import Deque.Lazy qualified as Deque
+import GHC.IsList (fromList)
 
 dfs :: (Hashable a) => (a -> [a]) -> a -> [a]
 dfs = dfsOn id
@@ -29,6 +31,17 @@ dfsOnN hash children = go HashSet.empty
         where
           h = hash x
 {-# INLINE dfsOnN #-}
+
+bfsOnN :: (Hashable r) => (a -> r) -> (a -> [a]) -> [a] -> [a]
+bfsOnN hash children = go HashSet.empty . fromList
+  where
+    go !seen queue = case Deque.uncons queue of
+      Nothing -> []
+      Just (x, xs)
+        | h `HashSet.member` seen -> go seen xs
+        | otherwise -> x : go (unsafeInsert h seen) (xs <> fromList (children x))
+        where
+          h = hash x
 
 dijkstra :: (Hashable a) => (Int -> a -> [(Int, a)]) -> a -> [(Int, a)]
 dijkstra children root = dijkstraOnN id children [(0, root)]

@@ -69,6 +69,7 @@ library
     AdventOfCode.Day18
     AdventOfCode.Day19
     AdventOfCode.Day20
+    AdventOfCode.Day21
     AdventOfCode.Interval
     AdventOfCode.Grid
     AdventOfCode.Main
