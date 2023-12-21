@@ -5,8 +5,10 @@ import AdventOfCode.Prelude
 import Control.Exception (assert)
 import Control.Monad (void)
 import Data.Char (isAsciiLower)
-import Data.HashMap.Strict qualified as HashMap
+import Data.HashMap.Lazy qualified as HashMap
 import Data.HashSet qualified as HashSet
+import Data.List (findIndex)
+import Debug.Trace
 import Deque.Lazy qualified as Deque
 import GHC.IsList (fromList)
 
@@ -30,7 +32,7 @@ solution =
   Solution
     { parser = buildInput <$> parseModule `sepEndBy` Parser.endOfLine,
       part1 = uncurry solve1,
-      part2 = length
+      part2 = uncurry solve2
     }
 
 parseName :: Parser Name
@@ -64,15 +66,26 @@ buildInput xs = (broadcaster, HashMap.fromList modules)
 solve1 :: [Name] -> HashMap Name Module -> Int
 solve1 broadcasts modules = lows * highs
   where
-    (lows, highs) = foldl' sumPair (0, 0) $ take 1000 states
+    (lows, highs) = foldl' sumPair (0, 0) $ take 1001 states
     states = iteratePush broadcasts modules
-    sumPair (!x1, !y1) (!x2, y2) = (x1 + x2, y1 + y2)
+    sumPair (!x1, !y1) (!x2, y2, _) = (x1 + x2, y1 + y2)
 
-iteratePush :: [Name] -> HashMap Name Module -> [(Int, Int)]
-iteratePush broadcasts modules = go (push broadcasts modules HashSet.empty)
+solve2 :: [Name] -> HashMap Name Module -> HashMap Name Int
+solve2 broadcasts modules = counts
   where
-    go (lows, highs, ons) =
-      (lows, highs) : go (push broadcasts modules ons)
+    states = map (\(_, _, ons) -> ons) $ iteratePush broadcasts modules
+    counts = HashMap.mapWithKey f modules
+    f name Module {ty, inputs} = case ty of
+      FlipFlop -> fromMaybe (error "no loop") $ findIndex (HashSet.member name) states
+      Conjunction ->
+        let ins = mapMaybe (`HashMap.lookup` counts) inputs
+         in traceShow (name, zip inputs ins) $ sum ins
+
+iteratePush :: [Name] -> HashMap Name Module -> [(Int, Int, HashSet Name)]
+iteratePush broadcasts modules = go (0, 0, HashSet.empty)
+  where
+    go state@(_, _, ons) =
+      state : go (push broadcasts modules ons)
 
 push :: [Name] -> HashMap Name Module -> HashSet Name -> (Int, Int, HashSet Name)
 push broadcasts modules = go (1, 0) (fromList $ map (,Low) broadcasts)
