@@ -3,8 +3,9 @@ module AdventOfCode.Day22 (solution) where
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
 import Control.DeepSeq (NFData (..))
+import Data.IntSet (IntSet)
 import Data.IntSet qualified as IntSet
-import Data.Ord (comparing)
+import Data.List (findIndices)
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
 
@@ -23,9 +24,9 @@ instance NFData Brick where
 solution :: Solution
 solution =
   Solution
-    { parser = Vector.fromList <$> parseBrick `sepEndBy` Parser.endOfLine,
+    { parser = Vector.fromList <$> parseBrick `sepEndBy'` Parser.endOfLine,
       part1 = solve1,
-      part2 = all (\Brick {start, end} -> x start <= x end && y start <= y end && z start <= z end)
+      part2 = solve2
     }
 
 parsePoint :: Parser Point
@@ -43,20 +44,32 @@ parseBrick = do
   pure Brick {start, end}
 
 solve1 :: Vector Brick -> Int
-solve1 bricks = Vector.length dropped - required
+solve1 bricks = Vector.length bricks - required
   where
     dropped = dropBricks bricks
-    supportedOnlyBy i brick =
-      let supporters =
-            Vector.findIndices
-              (\b -> z (end b) + 1 == z (start brick) && intersectXY brick b)
-              $ Vector.take i dropped
-       in if Vector.length supporters == 1
-            then Just $ Vector.head supporters
-            else Nothing
-    required =
-      IntSet.size . IntSet.fromList . Vector.toList $
-        Vector.imapMaybe supportedOnlyBy dropped
+    supportedOnlyBy = Vector.filter ((== 1) . IntSet.size) (supporters dropped)
+    required = IntSet.size $ IntSet.unions $ Vector.toList supportedOnlyBy
+
+solve2 :: Vector Brick -> Int
+solve2 bricks =
+  sum $ map (disintegrate suspended . IntSet.singleton) [0 .. Vector.length bricks - 1]
+  where
+    indices = Vector.enumFromN 0 (Vector.length bricks)
+    supportedBy = (supporters (dropBricks bricks) Vector.!)
+    suspended = Vector.dropWhile (IntSet.null . supportedBy) indices
+    disintegrate is falling
+      | Vector.null fall = 0
+      | otherwise =
+          Vector.length fall
+            + disintegrate
+              (Vector.dropWhile (< Vector.head fall) rest)
+              (falling <> fallSet)
+      where
+        (fall, rest) =
+          Vector.partition
+            ((`IntSet.isSubsetOf` falling) . supportedBy)
+            is
+        fallSet = IntSet.fromDistinctAscList . Vector.toList $ fall
 
 dropBrickTo :: Int -> Brick -> Brick
 dropBrickTo height Brick {start, end} =
@@ -65,12 +78,24 @@ dropBrickTo height Brick {start, end} =
 dropBricks :: Vector Brick -> Vector Brick
 dropBricks bricks = Vector.fromListN (Vector.length bricks) dropped
   where
-    sorted = sortBy (comparing (z . start)) $ Vector.toList bricks
+    sorted = sortOn (z . start) $ Vector.toList bricks
     dropped = zipWith go [0 ..] sorted
     go i brick = dropBrickTo (highest + 1) brick
       where
-        intersecting = filter (intersectXY brick) (take i dropped)
-        highest = maximum $ 0 : map (z . end) intersecting
+        intersections = filter (intersectXY brick) (take i dropped)
+        highest = maximum $ 0 : map (z . end) intersections
+
+supporters :: Vector Brick -> Vector IntSet
+supporters bricks =
+  Vector.fromListN (Vector.length bricks) $
+    zipWith supportedBy [0 ..] sorted
+  where
+    sorted = sortOn (z . start) $ Vector.toList bricks
+    supportedBy i brick =
+      IntSet.fromDistinctAscList $
+        findIndices (isSupporter brick) (take i sorted)
+    isSupporter brick b =
+      z (end b) + 1 == z (start brick) && intersectXY brick b
 
 intersectXY :: Brick -> Brick -> Bool
 intersectXY
