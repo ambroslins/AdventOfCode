@@ -7,6 +7,7 @@ module AdventOfCode.Position
     moveN,
     turnRight,
     turnLeft,
+    invert,
     origin,
     toTuple,
   )
@@ -62,6 +63,13 @@ turnLeft = \case
   East -> North
   South -> East
   West -> South
+
+invert :: Direction -> Direction
+invert = \case
+  North -> South
+  East -> West
+  South -> North
+  West -> East
 
 origin :: Position
 origin = Position {row = 0, col = 0}
