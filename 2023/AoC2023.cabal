@@ -34,6 +34,7 @@ common dependencies
     , deepseq
     , deque
     , hashable
+    , hmatrix
     , http-client
     , http-client-tls
     , http-types
@@ -72,6 +73,7 @@ library
     AdventOfCode.Day21
     AdventOfCode.Day22
     AdventOfCode.Day23
+    AdventOfCode.Day24
     AdventOfCode.Interval
     AdventOfCode.Grid
     AdventOfCode.Main
