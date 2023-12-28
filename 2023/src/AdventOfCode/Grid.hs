@@ -2,6 +2,7 @@ module AdventOfCode.Grid
   ( Grid,
     Direction (..),
     Position (..),
+    size,
     parse,
     map,
     fromRows,
@@ -40,6 +41,9 @@ data Grid v a = Grid
     cells :: !(v a)
   }
   deriving (Functor)
+
+size :: Grid v a -> (Int, Int)
+size Grid {nrows, ncols} = (nrows, ncols)
 
 parse :: Parser (Grid Unboxed.Vector Char)
 parse = do
