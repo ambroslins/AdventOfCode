@@ -6,9 +6,9 @@ import Control.Exception (assert)
 import Control.Monad (void)
 import Data.Char (isAsciiLower)
 import Data.HashMap.Lazy qualified as HashMap
+import Data.HashMap.Strict ((!))
 import Data.HashSet qualified as HashSet
-import Data.List (findIndex)
-import Debug.Trace
+import Data.List (find, findIndex)
 import Deque.Lazy qualified as Deque
 import GHC.IsList (fromList)
 
@@ -70,16 +70,28 @@ solve1 broadcasts modules = lows * highs
     states = iteratePush broadcasts modules
     sumPair (!x1, !y1) (!x2, y2, _) = (x1 + x2, y1 + y2)
 
-solve2 :: [Name] -> HashMap Name Module -> HashMap Name Int
-solve2 broadcasts modules = counts
+solve2 :: [Name] -> HashMap Name Module -> Int
+solve2 broadcasts modules = counts ! output
   where
     states = map (\(_, _, ons) -> ons) $ iteratePush broadcasts modules
+    output =
+      maybe
+        (error "no output module")
+        fst
+        $ find (elem "rx" . destinations . snd)
+        $ HashMap.toList modules
     counts = HashMap.mapWithKey f modules
-    f name Module {ty, inputs} = case ty of
-      FlipFlop -> fromMaybe (error "no loop") $ findIndex (HashSet.member name) states
-      Conjunction ->
-        let ins = mapMaybe (`HashMap.lookup` counts) inputs
-         in traceShow (name, zip inputs ins) $ sum ins
+    f name Module {ty = t, inputs} = case t of
+      FlipFlop ->
+        fromMaybe (error "no loop") $
+          findIndex (HashSet.member name) states
+      Conjunction
+        | all (== FlipFlop) inTypes -> sum inCounts
+        | all (== Conjunction) inTypes -> foldl' lcm 1 inCounts
+        | otherwise -> error "not all inputs are the same type"
+        where
+          inTypes = map ty $ mapMaybe (`HashMap.lookup` modules) inputs
+          inCounts = mapMaybe (`HashMap.lookup` counts) inputs
 
 iteratePush :: [Name] -> HashMap Name Module -> [(Int, Int, HashSet Name)]
 iteratePush broadcasts modules = go (0, 0, HashSet.empty)
