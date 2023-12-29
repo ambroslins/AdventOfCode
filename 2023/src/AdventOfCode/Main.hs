@@ -3,6 +3,7 @@ module AdventOfCode.Main
     solutions,
     today,
     solveToday,
+    solveAll,
     readInputFile,
   )
 where
@@ -38,6 +39,7 @@ import Control.DeepSeq (force)
 import Control.Exception (catch)
 import Control.Exception.Base (throwIO)
 import Data.ByteString qualified as BS
+import Data.Foldable (traverse_)
 import Data.IntMap qualified as IntMap
 import Data.Time
   ( NominalDiffTime,
@@ -180,23 +182,29 @@ showNominalDiffTime diff
     us = s * 1e6
 
 solve :: Int -> IO ()
-solve day = do
-  input <- readInputFile day
+solve day =
   case IntMap.lookup day solutions of
     Nothing -> putStrLn $ "No solution for day " <> show day
-    Just (Solution {parser, part1, part2}) -> do
-      putStrLn $ "Day " <> show day <> ":"
+    Just solution -> runSolution day solution
 
-      (x, parseTime) <- bench (runParser parser) input
-      printf "  Parser took %s\n" (showNominalDiffTime parseTime)
+runSolution :: Int -> Solution -> IO ()
+runSolution day (Solution {parser, part1, part2}) = do
+  input <- readInputFile day
+  putStrLn $ "Day " <> show day <> ":"
 
-      (result1, time1) <- bench (force . part1) x
-      printf "  Part 1 (took %s): %s\n" (showNominalDiffTime time1) (show result1)
+  (x, parseTime) <- bench (runParser parser) input
+  printf "  Parser took %s\n" (showNominalDiffTime parseTime)
 
-      (result2, time2) <- bench (force . part2) x
-      printf "  Part 2 (took %s): %s\n" (showNominalDiffTime time2) (show result2)
+  (result1, time1) <- bench (force . part1) x
+  printf "  Part 1 (took %s): %s\n" (showNominalDiffTime time1) (show result1)
 
-      printf "  Total time: %s\n" (showNominalDiffTime (parseTime + time1 + time2))
+  (result2, time2) <- bench (force . part2) x
+  printf "  Part 2 (took %s): %s\n" (showNominalDiffTime time2) (show result2)
+
+  printf "  Total time: %s\n" (showNominalDiffTime (parseTime + time1 + time2))
 
 solveToday :: IO ()
 solveToday = today >>= solve
+
+solveAll :: IO ()
+solveAll = traverse_ (uncurry runSolution) (IntMap.toList solutions)
