@@ -31,6 +31,7 @@ import AdventOfCode.Day21 qualified as Day21
 import AdventOfCode.Day22 qualified as Day22
 import AdventOfCode.Day23 qualified as Day23
 import AdventOfCode.Day24 qualified as Day24
+import AdventOfCode.Day25 qualified as Day25
 import AdventOfCode.Parser (runParser)
 import AdventOfCode.Prelude
 import Control.DeepSeq (force)
@@ -87,7 +88,8 @@ solutions =
       (21, Day21.solution),
       (22, Day22.solution),
       (23, Day23.solution),
-      (24, Day24.solution)
+      (24, Day24.solution),
+      (25, Day25.solution)
     ]
 
 readInputFile :: Int -> IO ByteString

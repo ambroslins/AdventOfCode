@@ -32,6 +32,18 @@ dfsOnN hash children = go HashSet.empty
           h = hash x
 {-# INLINE dfsOnN #-}
 
+bfs :: (Hashable a) => (a -> [a]) -> a -> [a]
+bfs = bfsOn id
+{-# INLINE bfs #-}
+
+bfsN :: (Hashable a) => (a -> [a]) -> [a] -> [a]
+bfsN = bfsOnN id
+{-# INLINE bfsN #-}
+
+bfsOn :: (Hashable r) => (a -> r) -> (a -> [a]) -> a -> [a]
+bfsOn hash children root = bfsOnN hash children [root]
+{-# INLINE bfsOn #-}
+
 bfsOnN :: (Hashable r) => (a -> r) -> (a -> [a]) -> [a] -> [a]
 bfsOnN hash children = go HashSet.empty . fromList
   where
