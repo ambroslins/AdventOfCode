@@ -14,8 +14,7 @@ solution :: Solution
 solution =
   Solution
     { parser = Grid.parse `sepEndBy'` Parser.endOfLine,
-      part1 = solve 0,
-      part2 = solve 1
+      solver = solve 0 &&& solve 1
     }
 
 -- | Number of different elements for each reflection line.

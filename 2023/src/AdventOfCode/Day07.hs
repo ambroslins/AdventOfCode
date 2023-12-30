@@ -30,8 +30,7 @@ solution :: Solution
 solution =
   Solution
     { parser = parseLine `sepEndBy'` Parser.endOfLine,
-      part1 = solve makeHand,
-      part2 = solve makeHandWithJoker
+      solver = solve makeHand &&& solve makeHandWithJoker
     }
 
 parseLine :: Parser (Cards, Int)

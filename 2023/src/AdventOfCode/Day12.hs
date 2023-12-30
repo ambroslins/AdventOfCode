@@ -16,8 +16,7 @@ solution :: Solution
 solution =
   Solution
     { parser = parseLine `sepEndBy` Parser.endOfLine,
-      part1 = solve1,
-      part2 = solve2
+      solver = solve1 &&& solve2
     }
 
 parseLine :: Parser (ByteString, Vector Int)

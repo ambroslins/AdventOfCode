@@ -12,8 +12,7 @@ solution =
         times <- parseTimes <* Parser.endOfLine
         distances <- parseDistances <* Parser.endOfLine
         pure (times, distances),
-      part1 = solve1,
-      part2 = solve2
+      solver = solve1 &&& solve2
     }
 
 parseTimes :: Parser [Int]

@@ -10,8 +10,7 @@ solution :: Solution
 solution =
   Solution
     { parser = Parser.line `sepEndBy` Parser.endOfLine,
-      part1 = solve findDigits,
-      part2 = solve findSpelledDigits
+      solver = solve findDigits &&& solve findSpelledDigits
     }
 
 solve :: (ByteString -> (First Int, Last Int)) -> [ByteString] -> Int

@@ -10,8 +10,7 @@ solution :: Solution
 solution =
   Solution
     { parser = parseGalaxies <$> Parser.lines,
-      part1 = solve 2,
-      part2 = solve 1000000
+      solver = solve 2 &&& solve 1000000
     }
 
 parseGalaxies :: [ByteString] -> [Position]

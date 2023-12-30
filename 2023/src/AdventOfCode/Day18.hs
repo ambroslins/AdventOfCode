@@ -16,8 +16,7 @@ solution :: Solution
 solution =
   Solution
     { parser = parseStep `sepEndBy'` Parser.endOfLine,
-      part1 = solve . map fst,
-      part2 = solve . map snd
+      solver = solve . map fst &&& solve . map snd
     }
 
 parseStep :: Parser (Step, Step)

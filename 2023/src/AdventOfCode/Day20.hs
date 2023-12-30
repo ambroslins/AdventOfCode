@@ -31,8 +31,7 @@ solution :: Solution
 solution =
   Solution
     { parser = buildInput <$> parseModule `sepEndBy` Parser.endOfLine,
-      part1 = uncurry solve1,
-      part2 = uncurry solve2
+      solver = uncurry solve1 &&& uncurry solve2
     }
 
 parseName :: Parser Name

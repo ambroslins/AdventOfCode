@@ -23,6 +23,7 @@ module AdventOfCode.Prelude
     module Data.Foldable1,
     module Data.Maybe,
     module Data.List.NonEmpty,
+    (&&&),
     sortBy,
     sortOn,
     sepBy',
@@ -42,6 +43,7 @@ import Control.Applicative.Combinators hiding
     someTill,
   )
 import Control.Applicative.Combinators.NonEmpty
+import Control.Arrow ((&&&))
 import Control.DeepSeq (NFData)
 import Control.Monad (guard)
 import Data.Attoparsec.ByteString (Parser, sepBy')
@@ -63,12 +65,10 @@ import Data.Maybe
 import Data.Set (Set)
 import GHC.Generics (Generic)
 
-data Solution = forall a b c.
-  (Show b, Show c, NFData b, NFData c) =>
+data Solution = forall a.
   Solution
   { parser :: Parser a,
-    part1 :: a -> b,
-    part2 :: a -> c
+    solver :: a -> (Int, Int)
   }
 
 sepEndBy' :: Parser a -> Parser b -> Parser [a]

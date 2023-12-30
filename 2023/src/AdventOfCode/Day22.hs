@@ -25,8 +25,7 @@ solution :: Solution
 solution =
   Solution
     { parser = Vector.fromList <$> parseBrick `sepEndBy'` Parser.endOfLine,
-      part1 = solve1,
-      part2 = solve2
+      solver = solve1 &&& solve2
     }
 
 parsePoint :: Parser Point

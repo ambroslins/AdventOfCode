@@ -35,7 +35,6 @@ import AdventOfCode.Day24 qualified as Day24
 import AdventOfCode.Day25 qualified as Day25
 import AdventOfCode.Parser (runParser)
 import AdventOfCode.Prelude
-import Control.DeepSeq (force)
 import Control.Exception (catch)
 import Control.Exception.Base (throwIO)
 import Data.ByteString qualified as BS
@@ -160,7 +159,7 @@ today = do
 -- Will evalute the result of @f x@ to WHNF before returning.
 bench :: (a -> b) -> a -> IO (b, NominalDiffTime)
 bench f x = do
-  start <- x `seq` getCurrentTime
+  start <- getCurrentTime
   let result = f x
   end <- result `seq` getCurrentTime
   pure (result, diffUTCTime end start)
@@ -173,9 +172,9 @@ showNominalDiffTime diff
   | s < 1e-2 = printf "%.3f ms" ms
   | s < 1e-1 = printf "%.2f ms" ms
   | s < 1e+0 = printf "%.1f ms" ms
-  | s < 1e+1 = printf "%.3f s" s
-  | s < 1e+2 = printf "%.2f s" s
-  | otherwise = printf "%.1f s" s
+  | s < 1e+1 = printf "%.3f  s" s
+  | s < 1e+2 = printf "%.2f  s" s
+  | otherwise = printf "%.1f  s" s
   where
     s = realToFrac diff :: Double
     ms = s * 1e3
@@ -188,18 +187,20 @@ solve day =
     Just solution -> runSolution day solution
 
 runSolution :: Int -> Solution -> IO ()
-runSolution day (Solution {parser, part1, part2}) = do
+runSolution day (Solution {parser, solver}) = do
   input <- readInputFile day
   putStrLn $ "Day " <> show day <> ":"
 
   (x, parseTime) <- bench (runParser parser) input
   printf "  Parser took %s\n" (showNominalDiffTime parseTime)
 
-  (result1, time1) <- bench (force . part1) x
-  printf "  Part 1 (took %s): %s\n" (showNominalDiffTime time1) (show result1)
+  let result = solver x
 
-  (result2, time2) <- bench (force . part2) x
-  printf "  Part 2 (took %s): %s\n" (showNominalDiffTime time2) (show result2)
+  (part1, time1) <- bench fst result
+  printf "  Part 1 (took %s): %d\n" (showNominalDiffTime time1) part1
+
+  (part2, time2) <- bench snd result
+  printf "  Part 2 (took %s): %d\n" (showNominalDiffTime time2) part2
 
   printf "  Total time: %s\n" (showNominalDiffTime (parseTime + time1 + time2))
 

@@ -7,7 +7,17 @@ import AdventOfCode.Prelude
 import Control.DeepSeq (NFData (rnf))
 import Data.List (tails)
 import Data.Vector.Storable qualified as Vector
-import Numeric.LinearAlgebra (Matrix, R, Vector, assoc, fromRows, norm_2, rows, toRows, (!), (<\>))
+import Numeric.LinearAlgebra
+  ( Matrix,
+    R,
+    Vector,
+    assoc,
+    fromRows,
+    norm_2,
+    rows,
+    (!),
+    (<\>),
+  )
 
 data Vec = Vec {x, y, z :: !Double}
   deriving (Eq, Show)
@@ -25,8 +35,7 @@ solution :: Solution
 solution =
   Solution
     { parser = parseHailstone `sepEndBy'` Parser.endOfLine,
-      part1 = solve1,
-      part2 = solve2
+      solver = solve1 &&& solve2
     }
 
 parseVec :: Parser Vec

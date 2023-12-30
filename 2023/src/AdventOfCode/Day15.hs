@@ -23,8 +23,7 @@ solution :: Solution
 solution =
   Solution
     { parser = Parser.match parseOperation `sepEndBy'` Parser.char ',' <* Parser.endOfLine,
-      part1 = solve1 . map fst,
-      part2 = solve2 . map snd
+      solver = solve1 . map fst &&& solve2 . map snd
     }
 
 solve1 :: [ByteString] -> Int

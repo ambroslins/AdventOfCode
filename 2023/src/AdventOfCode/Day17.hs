@@ -15,8 +15,7 @@ solution :: Solution
 solution =
   Solution
     { parser = Grid.map digitToInt <$> Grid.parse,
-      part1 = solve 1 largeCrucible,
-      part2 = solve 4 ultraCrucible
+      solver = solve 1 largeCrucible &&& solve 4 ultraCrucible
     }
 
 digitToInt :: Char -> Int

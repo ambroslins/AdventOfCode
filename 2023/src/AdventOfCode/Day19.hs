@@ -55,8 +55,7 @@ solution =
         Parser.endOfLine
         parts <- parsePart `sepEndBy'` Parser.endOfLine
         pure (HashMap.fromList ws, parts),
-      part1 = uncurry solve1,
-      part2 = uncurry solve2
+      solver = uncurry solve1 &&& uncurry solve2
     }
 
 parseWorkflow :: Parser (Name, Workflow)

@@ -13,8 +13,7 @@ solution :: Solution
 solution =
   Solution
     { parser = Grid.parse,
-      part1 = solve1,
-      part2 = solve2
+      solver = solve1 &&& solve2
     }
 
 solve1 :: Grid Vector Char -> Int

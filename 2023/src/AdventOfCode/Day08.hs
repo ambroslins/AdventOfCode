@@ -28,8 +28,7 @@ solution =
         steps <- parseSteps <* Parser.endOfLine <* Parser.endOfLine
         nodes <- parseNode `sepEndBy` Parser.endOfLine
         pure (steps, makeNodeMap nodes),
-      part1 = uncurry solve1,
-      part2 = uncurry solve2
+      solver = uncurry solve1 &&& uncurry solve2
     }
 
 parseSteps :: Parser Steps

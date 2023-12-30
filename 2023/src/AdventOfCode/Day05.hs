@@ -15,8 +15,7 @@ solution :: Solution
 solution =
   Solution
     { parser = parseInput,
-      part1 = uncurry (solve . ranges1),
-      part2 = uncurry (solve . ranges2)
+      solver = uncurry (solve . ranges1) &&& uncurry (solve . ranges2)
     }
 
 parseInput :: Parser ([(Int, Int)], [Map])
