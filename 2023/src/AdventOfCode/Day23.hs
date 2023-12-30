@@ -5,8 +5,7 @@ import AdventOfCode.Grid qualified as Grid
 import AdventOfCode.Position (invert)
 import AdventOfCode.Position qualified as Position
 import AdventOfCode.Prelude
-import Data.IntSet (IntSet)
-import Data.IntSet qualified as IntSet
+import Data.Bits (bit, (.&.), (.|.))
 import Data.List qualified as List
 import Data.Map.Strict ((!))
 import Data.Map.Strict qualified as Map
@@ -35,20 +34,20 @@ solve grid =
     end = nodeId $ snd $ Map.findMax graph
 
 longestPath :: Bool -> Node -> Int -> Int
-longestPath slopes start end = go 0 IntSet.empty start
+longestPath slopes start end = go 0 (BitSet 0) start
   where
     filt = if slopes then id else filter (not . slippy)
-    go :: Int -> IntSet -> Node -> Int
-    go n seen Node {nodeId, edges}
+    go :: Int -> BitSet -> Node -> Int
+    go !n !seen Node {nodeId, edges}
       | nodeId == end = n
-      | nodeId `IntSet.member` seen = 0
+      | nodeId `member` seen = 0
       | otherwise =
           maximum $
             map
               (\Edge {steps, to} -> go (n + steps) seen' to)
               (filt edges)
       where
-        seen' = IntSet.insert nodeId seen
+        seen' = insert nodeId seen
 
 -- mapper = if i > 0 then parMap rseq else map
 
@@ -98,3 +97,11 @@ isSlippy tile dir = case tile of
   'v' -> dir /= South
   '<' -> dir /= West
   _ -> False
+
+newtype BitSet = BitSet Word
+
+insert :: Int -> BitSet -> BitSet
+insert i (BitSet w) = BitSet $ w .|. bit i
+
+member :: Int -> BitSet -> Bool
+member i (BitSet w) = w .&. bit i /= 0
