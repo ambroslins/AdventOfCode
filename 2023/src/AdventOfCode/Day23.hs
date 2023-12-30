@@ -5,91 +5,91 @@ import AdventOfCode.Grid qualified as Grid
 import AdventOfCode.Position (invert)
 import AdventOfCode.Position qualified as Position
 import AdventOfCode.Prelude
-import Control.Exception (assert)
-import Control.Parallel.Strategies (parMap, rseq)
-import Data.HashMap.Strict qualified as HashMap
-import Data.HashSet qualified as HashSet
+import Data.IntSet (IntSet)
+import Data.IntSet qualified as IntSet
 import Data.List qualified as List
-import Data.Ord (comparing)
+import Data.Map.Strict ((!))
+import Data.Map.Strict qualified as Map
 import Data.Vector.Unboxed (Vector)
 
-type Graph = HashMap Position [Edge]
+data Node = Node {nodeId :: !Int, edges :: [Edge Node]}
 
-type Node = Position
-
-data Edge = Edge {steps :: !Int, to :: !Node, slippy :: !Bool}
-  deriving (Eq, Show)
+data Edge a = Edge {steps :: !Int, to :: !a, slippy :: !Bool}
+  deriving (Eq, Show, Functor)
 
 solution :: Solution
 solution =
   Solution
     { parser = Grid.parse,
-      solver = solve1 &&& solve2
+      solver = solve
     }
 
-solve1 :: Grid Vector Char -> Int
-solve1 grid =
-  longestPath start end $
-    HashMap.map (filter (not . slippy)) graph
+solve :: Grid Vector Char -> (Int, Int)
+solve grid =
+  ( longestPath False (graph ! start) end,
+    longestPath True (graph ! start) end
+  )
   where
     graph = buildGraph start grid
     start = fromMaybe (error "no start") $ Grid.findPosition (== '.') grid
-    end = List.maximumBy (comparing row) $ HashMap.keys graph
+    end = nodeId $ snd $ Map.findMax graph
 
-solve2 :: Grid Vector Char -> Int
-solve2 grid = longestPath start end graph
+longestPath :: Bool -> Node -> Int -> Int
+longestPath slopes start end = go 0 IntSet.empty start
   where
-    graph = buildGraph start grid
-    start = fromMaybe (error "no start") $ Grid.findPosition (== '.') grid
-    end = List.maximumBy (comparing row) $ HashMap.keys graph
-
-buildGraph :: Position -> Grid Vector Char -> Graph
-buildGraph start grid = go HashMap.empty start
-  where
-    go graph pos
-      | pos `HashMap.member` graph = graph
+    filt = if slopes then id else filter (not . slippy)
+    go :: Int -> IntSet -> Node -> Int
+    go n seen Node {nodeId, edges}
+      | nodeId == end = n
+      | nodeId `IntSet.member` seen = 0
       | otherwise =
-          let edges = findEdges pos
-           in foldl' go (HashMap.insert pos edges graph) (map to edges)
-    findEdges :: Position -> [Edge]
-    findEdges pos =
-      assert (Grid.unsafeIndex grid pos == '.') $ do
-        d <- [North, East, South, West]
-        let p = Position.move d pos
-        case Grid.index grid p of
-          Nothing -> []
-          Just t
-            | t == '#' -> []
-            | otherwise -> pure $ walkEdge 1 False p d t
-    walkEdge :: Int -> Bool -> Position -> Direction -> Char -> Edge
-    walkEdge n slippy pos dir tile = case nexts of
-      [(p, d, t)] -> walkEdge (n + 1) (slippy || isSlippy tile d) p d t
-      _ -> Edge {steps = n, slippy, to = pos}
+          maximum $
+            map
+              (\Edge {steps, to} -> go (n + steps) seen' to)
+              (filt edges)
       where
-        nexts = do
-          d <- List.delete (invert dir) [North, East, South, West]
-          let p = Position.move d pos
-          case Grid.index grid p of
-            Nothing -> []
-            Just t
-              | t == '#' -> []
-              | otherwise -> pure (p, d, t)
+        seen' = IntSet.insert nodeId seen
 
-longestPath :: Position -> Position -> Graph -> Int
-longestPath start end graph = go 12 0 HashSet.empty start
+-- mapper = if i > 0 then parMap rseq else map
+
+buildGraph :: Position -> Grid Vector Char -> Map Position Node
+buildGraph start grid = nodes
   where
-    go :: Int -> Int -> HashSet Position -> Position -> Int
-    go !i !n seen pos
-      | pos == end = n
-      | pos `HashSet.member` seen = 0
-      | otherwise = case HashMap.lookup pos graph of
-          Nothing -> 0
-          Just nexts ->
-            maximum $
-              mapper (\Edge {steps, to} -> go (i - 1) (n + steps) set to) nexts
+    nodes = go Map.empty start
+    go ns pos
+      | pos `Map.member` ns = ns
+      | otherwise = foldl' go (Map.insert pos node ns) (map to edges)
       where
-        set = HashSet.insert pos seen
-        mapper = if i > 0 then parMap rseq else map
+        edges = mapMaybe (walkToJunction grid pos) [North, East, South, West]
+        node =
+          Node
+            { nodeId = Map.size ns,
+              edges = map (fmap (nodes !)) edges
+            }
+
+walkToJunction ::
+  Grid Vector Char ->
+  Position ->
+  Direction ->
+  Maybe (Edge Position)
+walkToJunction grid position direction =
+  let pos = Position.move direction position
+   in case Grid.index grid pos of
+        Nothing -> Nothing
+        Just tile -> guard (tile /= '#') $> go 1 False pos direction tile
+  where
+    go :: Int -> Bool -> Position -> Direction -> Char -> Edge Position
+    go !steps !slippy pos dir tile = case neighbors grid pos dir of
+      [(p, d, t)] -> go (steps + 1) (slippy || isSlippy tile d) p d t
+      _ -> Edge {steps, to = pos, slippy}
+
+neighbors :: Grid Vector Char -> Position -> Direction -> [(Position, Direction, Char)]
+neighbors grid pos dir = do
+  d <- List.delete (invert dir) [North, East, South, West]
+  let p = Position.move d pos
+  case Grid.index grid p of
+    Nothing -> []
+    Just t -> [(p, d, t) | t /= '#']
 
 isSlippy :: Char -> Direction -> Bool
 isSlippy tile dir = case tile of
