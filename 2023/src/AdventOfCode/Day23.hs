@@ -5,16 +5,17 @@ import AdventOfCode.Grid qualified as Grid
 import AdventOfCode.Position (invert)
 import AdventOfCode.Position qualified as Position
 import AdventOfCode.Prelude
+import Control.Monad.State.Strict (runState)
+import Control.Monad.State.Strict qualified as State
 import Data.Bits (bit, (.&.), (.|.))
 import Data.List qualified as List
-import Data.Map.Strict ((!))
 import Data.Map.Strict qualified as Map
-import Data.Vector.Unboxed (Vector)
+import Data.Vector (Vector)
+import Data.Vector qualified as Vector
+import Data.Vector.Unboxed qualified as Unboxed
+import Text.Printf (printf)
 
-data Node = Node {nodeId :: !Int, edges :: [Edge Node]}
-
-data Edge a = Edge {steps :: !Int, to :: !a, slippy :: !Bool}
-  deriving (Eq, Show, Functor)
+type Graph = Vector (Unboxed.Vector (Int, Int, Bool))
 
 solution :: Solution
 solution =
@@ -23,66 +24,76 @@ solution =
       solver = solve
     }
 
-solve :: Grid Vector Char -> (Int, Int)
+solve :: Grid Unboxed.Vector Char -> (Int, Int)
 solve grid =
-  ( longestPath False (graph ! start) end,
-    longestPath True (graph ! start) end
+  ( longestPath (Vector.map (Unboxed.filter (not . slippery)) graph) goal,
+    longestPath graph goal
   )
   where
-    graph = buildGraph start grid
+    (graph, goal) = buildGraph start grid
     start = fromMaybe (error "no start") $ Grid.findPosition (== '.') grid
-    end = nodeId $ snd $ Map.findMax graph
+    slippery (_, _, b) = b
 
-longestPath :: Bool -> Node -> Int -> Int
-longestPath slopes start end = go 0 (BitSet 0) start
+longestPath :: Graph -> Int -> Int
+longestPath graph end = go 0 (BitSet 0) 0
   where
-    filt = if slopes then id else filter (not . slippy)
-    go :: Int -> BitSet -> Node -> Int
-    go !n !seen Node {nodeId, edges}
-      | nodeId == end = n
-      | nodeId `member` seen = 0
+    go :: Int -> BitSet -> Int -> Int
+    go !n !seen !i
+      | i == end = n
+      | i `member` seen = 0
       | otherwise =
-          maximum $
-            map
-              (\Edge {steps, to} -> go (n + steps) seen' to)
-              (filt edges)
+          Unboxed.maximum $
+            Unboxed.map
+              (\(steps, to, _) -> go (n + steps) s to)
+              (graph Vector.! i)
       where
-        seen' = insert nodeId seen
+        s = insert i seen
 
 -- mapper = if i > 0 then parMap rseq else map
 
-buildGraph :: Position -> Grid Vector Char -> Map Position Node
-buildGraph start grid = nodes
+buildGraph :: Position -> Grid Unboxed.Vector Char -> (Graph, Int)
+buildGraph start grid = (Vector.fromList graph, snd $ Map.findMax nodes)
   where
-    nodes = go Map.empty start
-    go ns pos
-      | pos `Map.member` ns = ns
-      | otherwise = foldl' go (Map.insert pos node ns) (map to edges)
-      where
-        edges = mapMaybe (walkToJunction grid pos) [North, East, South, West]
-        node =
-          Node
-            { nodeId = Map.size ns,
-              edges = map (fmap (nodes !)) edges
-            }
+    (graph, nodes) = runState (go start) Map.empty
+    go pos = do
+      seen <- State.get
+      if pos `Map.member` seen
+        then pure []
+        else do
+          let edges =
+                mapMaybe
+                  (walkToJunction grid pos)
+                  [North, East, South, West]
+              v =
+                Unboxed.fromList $
+                  map
+                    (\(steps, p, slippery) -> (steps, nodes Map.! p, slippery))
+                    edges
+          State.put (Map.insert pos (Map.size seen) seen)
+          vs <- concat <$> traverse (\(_, p, _) -> go p) edges
+          pure (v : vs)
 
 walkToJunction ::
-  Grid Vector Char ->
+  Grid Unboxed.Vector Char ->
   Position ->
   Direction ->
-  Maybe (Edge Position)
+  Maybe (Int, Position, Bool)
 walkToJunction grid position direction =
   let pos = Position.move direction position
    in case Grid.index grid pos of
         Nothing -> Nothing
         Just tile -> guard (tile /= '#') $> go 1 False pos direction tile
   where
-    go :: Int -> Bool -> Position -> Direction -> Char -> Edge Position
-    go !steps !slippy pos dir tile = case neighbors grid pos dir of
-      [(p, d, t)] -> go (steps + 1) (slippy || isSlippy tile d) p d t
-      _ -> Edge {steps, to = pos, slippy}
+    go :: Int -> Bool -> Position -> Direction -> Char -> (Int, Position, Bool)
+    go !steps !slippery pos dir tile = case neighbors grid pos dir of
+      [(p, d, t)] -> go (steps + 1) (slippery || isslippery tile d) p d t
+      _ -> (steps, pos, slippery)
 
-neighbors :: Grid Vector Char -> Position -> Direction -> [(Position, Direction, Char)]
+neighbors ::
+  Grid Unboxed.Vector Char ->
+  Position ->
+  Direction ->
+  [(Position, Direction, Char)]
 neighbors grid pos dir = do
   d <- List.delete (invert dir) [North, East, South, West]
   let p = Position.move d pos
@@ -90,8 +101,8 @@ neighbors grid pos dir = do
     Nothing -> []
     Just t -> [(p, d, t) | t /= '#']
 
-isSlippy :: Char -> Direction -> Bool
-isSlippy tile dir = case tile of
+isslippery :: Char -> Direction -> Bool
+isslippery tile dir = case tile of
   '^' -> dir /= North
   '>' -> dir /= East
   'v' -> dir /= South
@@ -99,6 +110,10 @@ isSlippy tile dir = case tile of
   _ -> False
 
 newtype BitSet = BitSet Word
+  deriving (Eq)
+
+instance Show BitSet where
+  show (BitSet w) = printf "%064b" w
 
 insert :: Int -> BitSet -> BitSet
 insert i (BitSet w) = BitSet $ w .|. bit i
