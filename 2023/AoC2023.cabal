@@ -81,6 +81,7 @@ library
     AdventOfCode.Parser
     AdventOfCode.Position
     AdventOfCode.Prelude
+    AdventOfCode.PQueue
     AdventOfCode.Search
 
   -- other-modules:
