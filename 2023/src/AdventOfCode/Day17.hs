@@ -7,52 +7,37 @@ import AdventOfCode.Position qualified as Position
 import AdventOfCode.Prelude
 import AdventOfCode.Search qualified as Search
 import Data.Char (ord)
+import Data.List qualified as List
 import Data.Vector.Unboxed (Vector)
-
-type TurnRule = Direction -> Int -> [(Direction, Int)]
 
 solution :: Solution
 solution =
   Solution
     { parser = Grid.map digitToInt <$> Grid.parse,
-      solver = solve 1 largeCrucible &&& solve 4 ultraCrucible
+      solver = solve 1 3 &&& solve 4 10
     }
 
 digitToInt :: Char -> Int
 digitToInt c = ord c - ord '0'
 
-solve :: Int -> TurnRule -> Grid Vector Int -> Int
-solve stop turn grid =
-  head
-    $ mapMaybe
-      ( \(loss, (pos, _, n)) ->
-          if pos == end && n >= stop
-            then Just loss
-            else Nothing
-      )
-    $ Search.dijkstraOnN id next [(0, start East), (0, start South)]
+solve :: Int -> Int -> Grid Vector Int -> Int
+solve minStraight maxStraight grid =
+  fromMaybe (error "no path found") $
+    findFirst (\(loss, (pos, _)) -> if pos == end then Just loss else Nothing) $
+      Search.dijkstraOnN id next [(0, start East), (0, start South)]
   where
-    start dir = (Position.origin, dir, 0)
+    start dir = (Position.origin, dir)
     end = Position {row = Grid.nrows grid - 1, col = Grid.ncols grid - 1}
-    next loss (pos, dir, n) = do
-      (d, m) <- turn dir n
-      let p = Position.move d pos
-      case Grid.index grid p of
-        Nothing -> []
-        Just l -> pure (loss + l, (p, d, m + 1))
+    next loss (pos, dir) = do
+      (p, l) <- drop (minStraight - 1) $ zip ps ls
+      [(l, (p, turnLeft dir)), (l, (p, turnRight dir))]
+      where
+        ps = take maxStraight $ drop 1 $ iterate (Position.move dir) pos
+        ls = drop 1 $ List.scanl' (+) loss $ mapMaybe (Grid.index grid) ps
 
-largeCrucible :: TurnRule
-largeCrucible dir n
-  | n < 3 = (dir, n) : turns
-  | otherwise = turns
+findFirst :: (a -> Maybe b) -> [a] -> Maybe b
+findFirst f = go
   where
-    turns = [(turnLeft dir, 0), (turnRight dir, 0)]
-
-ultraCrucible :: TurnRule
-ultraCrucible dir n
-  | n < 4 = [straight]
-  | n < 10 = straight : turns
-  | otherwise = turns
-  where
-    straight = (dir, n)
-    turns = [(turnLeft dir, 0), (turnRight dir, 0)]
+    go = \case
+      [] -> Nothing
+      x : xs -> f x <|> go xs
