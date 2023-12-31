@@ -1,4 +1,17 @@
-module AdventOfCode.Search where
+module AdventOfCode.Search
+  ( dfs,
+    dfsOn,
+    dfsN,
+    dfsOnN,
+    bfs,
+    bfsOn,
+    bfsN,
+    bfsOnN,
+    dijkstra,
+    dijkstraOnN,
+    countUnique,
+  )
+where
 
 import AdventOfCode.PQueue qualified as PQueue
 import AdventOfCode.Prelude
@@ -70,6 +83,16 @@ dijkstraOnN hash children = go HashSet.empty . PQueue.fromList
         where
           h = hash x
 {-# INLINE dijkstraOnN #-}
+
+countUnique :: (Hashable a) => [a] -> Int
+countUnique = go 0 HashSet.empty
+  where
+    go !n !seen = \case
+      [] -> n
+      (x : xs)
+        | x `HashSet.member` seen -> go n seen xs
+        | otherwise -> go (n + 1) (unsafeInsert x seen) xs
+{-# INLINE countUnique #-}
 
 unsafeInsert :: (Hashable a) => a -> HashSet a -> HashSet a
 unsafeInsert x = HashSet.fromMap . HashMap.unsafeInsert x () . HashSet.toMap

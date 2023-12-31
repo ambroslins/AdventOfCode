@@ -4,7 +4,6 @@ import AdventOfCode.Grid (Grid)
 import AdventOfCode.Grid qualified as Grid
 import AdventOfCode.Position qualified as Position
 import AdventOfCode.Prelude
-import AdventOfCode.Search qualified as Search
 import Control.Parallel.Strategies (parMap, rseq)
 import Data.HashSet qualified as HashSet
 import Data.Vector.Unboxed (Vector)
@@ -31,33 +30,31 @@ solve2 grid = maximum $ parMap rseq (energizedTiles grid) starts
     c = Grid.ncols grid - 1
 
 energizedTiles :: Grid Vector Char -> (Position, Direction) -> Int
-energizedTiles grid =
-  HashSet.size . HashSet.fromList . map fst . Search.dfs move
+energizedTiles grid = HashSet.size . uncurry (go HashSet.empty)
   where
-    move (position, direction) = do
-      dir <- case Grid.unsafeIndex grid position of
-        '.' -> [direction]
-        '/' -> case direction of
-          North -> [East]
-          East -> [North]
-          South -> [West]
-          West -> [South]
-        '\\' -> case direction of
-          North -> [West]
-          East -> [South]
-          South -> [East]
-          West -> [North]
-        '|' -> case direction of
-          North -> [North]
-          East -> [North, South]
-          South -> [South]
-          West -> [North, South]
-        '-' -> case direction of
-          North -> [East, West]
-          East -> [East]
-          South -> [East, West]
-          West -> [West]
-        c -> error $ "invalid tile: " <> show c
-      let pos = Position.move dir position
-      guard $ Grid.inside pos grid
-      pure (pos, dir)
+    go !energized !pos !dir =
+      case Grid.index grid pos of
+        Nothing -> energized
+        Just '.' -> goNext dir
+        Just '/' -> goNext $ case dir of
+          North -> East
+          East -> North
+          South -> West
+          West -> South
+        Just '\\' -> goNext $ case dir of
+          North -> West
+          East -> South
+          South -> East
+          West -> North
+        Just '|'
+          | pos `HashSet.member` energized -> energized
+          | dir `elem` [North, South] -> goNext dir
+          | otherwise -> go (goNext North) (Position.move South pos) South
+        Just '-'
+          | pos `HashSet.member` energized -> energized
+          | dir `elem` [East, West] -> goNext dir
+          | otherwise -> go (goNext East) (Position.move West pos) West
+        Just c -> error $ "invalid tile: " <> show c
+      where
+        goNext d =
+          go (HashSet.insert pos energized) (Position.move d pos) d
