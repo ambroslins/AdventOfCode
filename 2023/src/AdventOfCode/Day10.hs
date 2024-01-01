@@ -4,10 +4,10 @@ import AdventOfCode.Grid (Grid)
 import AdventOfCode.Grid qualified as Grid
 import AdventOfCode.Position qualified as Pos
 import AdventOfCode.Prelude
-import Data.Foldable (foldlM)
-import Data.HashSet qualified as HashSet
-import Data.List (find)
+import Data.IntSet (IntSet)
+import Data.IntSet qualified as IntSet
 import Data.Vector.Unboxed (Vector)
+import Data.Vector.Unboxed qualified as Vector
 
 type Tile = Char
 
@@ -21,71 +21,60 @@ solution :: Solution
 solution =
   Solution
     { parser = Grid.parse,
-      solver = solve1 &&& solve2
+      solver = solve
     }
 
-solve1 :: Grid Vector Tile -> Int
-solve1 grid = length loop `div` 2
+solve :: Grid Vector Tile -> (Int, Int)
+solve grid =
+  ( IntSet.size loopSet `div` 2,
+    tilesInsideLoop start grid loopSet
+  )
   where
-    loop = fromMaybe (error "solve1: no loop found") $ findLoop grid
+    loop = fromMaybe (error "solve: no loop found") $ findLoop grid
+    start = maybe (error "solve: empty loop") direction $ listToMaybe loop
+    loopSet =
+      IntSet.fromList $
+        map (\State {position = p} -> row p * Grid.ncols grid + col p) loop
 
-solve2 :: Grid Vector Tile -> Int
-solve2 grid =
-  maybe (error "solve2: no tiles inside loop") HashSet.size $
-    tilesLeft <|> tilesRight
+tilesInsideLoop :: Direction -> Grid Vector Tile -> IntSet -> Int
+tilesInsideLoop start grid loop =
+  fst $ Vector.ifoldl' f (0, False) (Grid.cells grid)
   where
-    loop = fromMaybe (error "solve2: no loop gound") $ findLoop grid
-    tilesLeft = tilesInsideLoop Pos.turnLeft grid loop
-    tilesRight = tilesInsideLoop Pos.turnRight grid loop
-
-tilesInsideLoop ::
-  (Direction -> Direction) ->
-  Grid Vector Tile ->
-  [State] ->
-  Maybe (HashSet Position)
-tilesInsideLoop turn grid loop = go HashSet.empty loop
-  where
-    onLoop = HashSet.fromList $ map position loop
-    go tiles = \case
-      [] -> Just tiles
-      State {position, direction} : rest -> do
-        let nextPos = Pos.move direction position
-            dir = turn direction
-        ts <- foldlM flood tiles [Pos.move dir position, Pos.move dir nextPos]
-        go ts rest
-    flood :: HashSet Position -> Position -> Maybe (HashSet Position)
-    flood tiles pos
-      | pos `HashSet.member` tiles || pos `HashSet.member` onLoop = Just tiles
-      | pos `Grid.inside` grid =
-          foldlM flood (HashSet.insert pos tiles) $
-            [Pos.move dir pos | dir <- [North, East, South, West]]
-      | otherwise = Nothing
+    crossed :: String
+    crossed = case start of
+      North -> "|LJS"
+      South -> "|F7S"
+      _ -> "|F7"
+    f :: (Int, Bool) -> Int -> Char -> (Int, Bool)
+    f (!acc, !inside) !i !tile
+      | i `IntSet.member` loop =
+          (acc, if tile `elem` crossed then not inside else inside)
+      | inside = (acc + 1, inside)
+      | otherwise = (acc, inside)
 
 findLoop :: Grid Vector Tile -> Maybe [State]
-findLoop grid = do
-  start <- Grid.findPosition (== 'S') grid
-  let paths =
+findLoop grid =
+  case Grid.findPosition (== 'S') grid of
+    Nothing -> Nothing
+    Just start ->
+      listToMaybe $
         [ walk grid state
-          | direction <- [North, East, South, West],
-            let state = (State {position = start, direction})
+          | direction <- [North, South, East],
+            let position = Pos.move direction start,
+            let state = State {position, direction},
+            isJust $ step grid state
         ]
-  let isLoop = \case
-        _ : _ : _ -> True
-        _ -> False
-  find isLoop paths
 
 walk :: Grid Vector Tile -> State -> [State]
 walk grid state = case step grid state of
   Nothing -> [state]
-  Just state' -> state : walk grid state'
+  Just s -> state : walk grid s
 
 step :: Grid Vector Tile -> State -> Maybe State
 step grid State {direction, position} = do
-  tile <- Grid.index grid pos
+  tile <- Grid.index grid position
   dir <- turnPipe direction tile
-  pure State {position = pos, direction = dir}
-  where
-    pos = Pos.move direction position
+  pure State {position = Pos.move dir position, direction = dir}
 
 turnPipe :: Direction -> Tile -> Maybe Direction
 turnPipe dir tile = case (tile, dir) of
