@@ -12,10 +12,9 @@ where
 import Data.Bifunctor (second)
 import Data.IntMap (IntMap)
 import Data.IntMap qualified as IntMap
-import Data.List.NonEmpty (NonEmpty (..), nonEmpty, (<|))
 import Prelude hiding (null)
 
-newtype PQueue a = PQueue (IntMap (NonEmpty a))
+newtype PQueue a = PQueue (IntMap [a])
 
 empty :: PQueue a
 empty = PQueue IntMap.empty
@@ -33,15 +32,14 @@ fromList =
 
 insert :: Int -> a -> PQueue a -> PQueue a
 insert k v (PQueue m) =
-  PQueue (IntMap.alter (Just . maybe (pure v) (v <|)) k m)
+  PQueue (IntMap.alter (Just . maybe (pure v) (v :)) k m)
+{-# INLINE insert #-}
 
 deleteMin :: PQueue a -> Maybe (Int, a, PQueue a)
 deleteMin (PQueue m) = case IntMap.minViewWithKey m of
   Nothing -> Nothing
-  Just ((k, v :| vs), m') ->
-    Just
-      ( k,
-        v,
-        PQueue $ maybe m' (\ne -> IntMap.insert k ne m') (nonEmpty vs)
-      )
+  Just ((k, vs), m') -> case vs of
+    [v] -> Just (k, v, PQueue m')
+    v : xs -> Just (k, v, PQueue (IntMap.insert k xs m'))
+    [] -> error "PQueue.deleteMin: empty list"
 {-# INLINE deleteMin #-}

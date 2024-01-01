@@ -24,16 +24,19 @@ solve :: Int -> Int -> Grid Vector Int -> Int
 solve minStraight maxStraight grid =
   fromMaybe (error "no path found") $
     findFirst (\(loss, (pos, _)) -> if pos == end then Just loss else Nothing) $
-      Search.dijkstraOnN id next [(0, start East), (0, start South)]
+      Search.dijkstraOnN rep next [(0, start East), (0, start South)]
   where
     start dir = (Position.origin, dir)
     end = Position {row = Grid.nrows grid - 1, col = Grid.ncols grid - 1}
-    next loss (pos, dir) = do
-      (p, l) <- drop (minStraight - 1) $ zip ps ls
-      [(l, (p, turnLeft dir)), (l, (p, turnRight dir))]
+    rep (Position {row, col}, dir) = (row * Grid.ncols grid + col) * 4 + fromEnum dir
+    next loss (pos, dir) =
+      {-# SCC "next" #-}
+      do
+        (p, l) <- drop (minStraight - 1) $ zip ps ls
+        [(l, (p, turnLeft dir)), (l, (p, turnRight dir))]
       where
-        ps = take maxStraight $ drop 1 $ iterate (Position.move dir) pos
-        ls = drop 1 $ List.scanl' (+) loss $ mapMaybe (Grid.index grid) ps
+        ps = take maxStraight $ tail $ iterate (Position.move dir) pos
+        ls = tail $ List.scanl' (+) loss $ mapMaybe (Grid.index grid) ps
 
 findFirst :: (a -> Maybe b) -> [a] -> Maybe b
 findFirst f = go

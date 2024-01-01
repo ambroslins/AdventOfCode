@@ -17,6 +17,7 @@ import AdventOfCode.PQueue qualified as PQueue
 import AdventOfCode.Prelude
 import Data.HashMap.Internal qualified as HashMap
 import Data.HashSet qualified as HashSet
+import Data.IntSet qualified as IntSet
 import Deque.Lazy qualified as Deque
 import GHC.IsList (fromList)
 
@@ -71,7 +72,12 @@ dijkstra :: (Hashable a) => (Int -> a -> [(Int, a)]) -> a -> [(Int, a)]
 dijkstra children root = dijkstraOnN id children [(0, root)]
 {-# INLINE dijkstra #-}
 
-dijkstraOnN :: (Hashable r) => (a -> r) -> (Int -> a -> [(Int, a)]) -> [(Int, a)] -> [(Int, a)]
+dijkstraOnN ::
+  (Hashable r) =>
+  (a -> r) ->
+  (Int -> a -> [(Int, a)]) ->
+  [(Int, a)] ->
+  [(Int, a)]
 dijkstraOnN hash children = go HashSet.empty . PQueue.fromList
   where
     insertPq pq (p, x) = PQueue.insert p x pq
@@ -79,10 +85,33 @@ dijkstraOnN hash children = go HashSet.empty . PQueue.fromList
       Nothing -> []
       Just (p, x, pq')
         | h `HashSet.member` seen -> go seen pq'
-        | otherwise -> (p, x) : go (unsafeInsert h seen) (foldl' insertPq pq' (children p x))
+        | otherwise ->
+            (p, x)
+              : go (unsafeInsert h seen) (foldl' insertPq pq' (children p x))
         where
           h = hash x
-{-# INLINE dijkstraOnN #-}
+{-# INLINE [1] dijkstraOnN #-}
+
+dijkstraOnInt ::
+  (a -> Int) ->
+  (Int -> a -> [(Int, a)]) ->
+  [(Int, a)] ->
+  [(Int, a)]
+dijkstraOnInt rep children = go IntSet.empty . PQueue.fromList
+  where
+    insertPq pq (p, x) = PQueue.insert p x pq
+    go !seen pq = case PQueue.deleteMin pq of
+      Nothing -> []
+      Just (p, x, pq')
+        | r `IntSet.member` seen -> go seen pq'
+        | otherwise ->
+            (p, x)
+              : go (IntSet.insert r seen) (foldl' insertPq pq' (children p x))
+        where
+          r = rep x
+{-# INLINE dijkstraOnInt #-}
+
+{-# RULES "dijkstraOnInt" dijkstraOnN = dijkstraOnInt #-}
 
 countUnique :: (Hashable a) => [a] -> Int
 countUnique = go 0 HashSet.empty
