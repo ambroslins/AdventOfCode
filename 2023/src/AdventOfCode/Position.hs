@@ -41,14 +41,16 @@ instance NFData Position where
 
 move :: Direction -> Position -> Position
 move dir = moveN dir 1
+{-# INLINE move #-}
 
 moveN :: Direction -> Int -> Position -> Position
-moveN dir n Position {row, col} =
+moveN dir n =
   case dir of
-    North -> Position {row = row - n, col}
-    East -> Position {row, col = col + n}
-    South -> Position {row = row + n, col}
-    West -> Position {row, col = col - n}
+    North -> \Position {row, col} -> Position {row = row - n, col}
+    East -> \Position {row, col} -> Position {row, col = col + n}
+    South -> \Position {row, col} -> Position {row = row + n, col}
+    West -> \Position {row, col} -> Position {row, col = col - n}
+{-# INLINE moveN #-}
 
 turnRight :: Direction -> Direction
 turnRight = \case
@@ -56,6 +58,7 @@ turnRight = \case
   East -> South
   South -> West
   West -> North
+{-# INLINE turnRight #-}
 
 turnLeft :: Direction -> Direction
 turnLeft = \case
@@ -63,6 +66,7 @@ turnLeft = \case
   East -> North
   South -> East
   West -> South
+{-# INLINE turnLeft #-}
 
 invert :: Direction -> Direction
 invert = \case
@@ -70,9 +74,11 @@ invert = \case
   East -> West
   South -> North
   West -> East
+{-# INLINE invert #-}
 
 origin :: Position
 origin = Position {row = 0, col = 0}
+{-# INLINE origin #-}
 
 toTuple :: Position -> (Int, Int)
 toTuple Position {row, col} = (row, col)

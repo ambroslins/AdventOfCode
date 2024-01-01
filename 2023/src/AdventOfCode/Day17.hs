@@ -7,8 +7,8 @@ import AdventOfCode.Position qualified as Position
 import AdventOfCode.Prelude
 import AdventOfCode.Search qualified as Search
 import Data.Char (ord)
-import Data.List qualified as List
 import Data.Vector.Unboxed (Vector)
+import Data.Vector.Unboxed qualified as Vector
 
 solution :: Solution
 solution =
@@ -29,12 +29,16 @@ solve minStraight maxStraight grid =
     start dir = (Position.origin, dir)
     end = Position {row = Grid.nrows grid - 1, col = Grid.ncols grid - 1}
     rep (Position {row, col}, dir) = (row * Grid.ncols grid + col) * 4 + fromEnum dir
-    next loss (pos, dir) = do
-      (p, l) <- drop (minStraight - 1) $ zip ps ls
+    next !loss (!pos, !dir) = do
+      (p, l) <- Vector.toList $ Vector.drop (minStraight - 1) $ Vector.zip ps ls
       [(l, (p, turnLeft dir)), (l, (p, turnRight dir))]
       where
-        ps = take maxStraight $ tail $ iterate (Position.move dir) pos
-        ls = tail $ List.scanl' (+) loss $ mapMaybe (Grid.index grid) ps
+        move = Position.move dir
+        ps = Vector.iterateN maxStraight move (move pos)
+        ls =
+          Vector.postscanl' (+) loss $
+            Vector.map (Grid.unsafeIndex grid) $
+              Vector.takeWhile (`Grid.inside` grid) ps
 
 findFirst :: (a -> Maybe b) -> [a] -> Maybe b
 findFirst f = go
