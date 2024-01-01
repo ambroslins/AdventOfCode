@@ -7,13 +7,13 @@ module AdventOfCode.Search
     bfsOn,
     bfsN,
     bfsOnN,
-    dijkstra,
-    dijkstraOnN,
+    dijkstraOnInt,
   )
 where
 
-import AdventOfCode.PQueue qualified as PQueue
+import AdventOfCode.BucketQueue qualified as BQ
 import AdventOfCode.Prelude
+import Control.Monad.ST.Strict (runST)
 import Data.HashMap.Internal qualified as HashMap
 import Data.HashSet qualified as HashSet
 import Data.IntSet qualified as IntSet
@@ -67,50 +67,25 @@ bfsOnN hash children = go HashSet.empty . fromList
         where
           h = hash x
 
-dijkstra :: (Hashable a) => (Int -> a -> [(Int, a)]) -> a -> [(Int, a)]
-dijkstra children root = dijkstraOnN id children [(0, root)]
-{-# INLINE dijkstra #-}
-
-dijkstraOnN ::
-  (Hashable r) =>
-  (a -> r) ->
-  (Int -> a -> [(Int, a)]) ->
-  [(Int, a)] ->
-  [(Int, a)]
-dijkstraOnN hash children = go HashSet.empty . PQueue.fromList
-  where
-    insertPq pq (p, x) = PQueue.insert p x pq
-    go !seen pq = case PQueue.deleteMin pq of
-      Nothing -> []
-      Just (p, x, pq')
-        | h `HashSet.member` seen -> go seen pq'
-        | otherwise ->
-            (p, x)
-              : go (unsafeInsert h seen) (foldl' insertPq pq' (children p x))
-        where
-          h = hash x
-{-# INLINE [1] dijkstraOnN #-}
-
 dijkstraOnInt ::
   (a -> Int) ->
   (Int -> a -> [(Int, a)]) ->
   [(Int, a)] ->
   [(Int, a)]
-dijkstraOnInt rep children = go IntSet.empty . PQueue.fromList
-  where
-    insertPq pq (p, x) = PQueue.insert p x pq
-    go !seen pq = case PQueue.deleteMin pq of
-      Nothing -> []
-      Just (p, x, pq')
-        | r `IntSet.member` seen -> go seen pq'
-        | otherwise ->
-            (p, x)
-              : go (IntSet.insert r seen) (foldl' insertPq pq' (children p x))
-        where
-          r = rep x
+dijkstraOnInt rep children roots = runST $ do
+  bq <- BQ.fromList 1024 roots
+  let go !seen =
+        BQ.dequeue bq >>= \case
+          Nothing -> pure []
+          Just (p, x)
+            | r `IntSet.member` seen -> go seen
+            | otherwise -> do
+                BQ.enqueueList bq (children p x)
+                ((p, x) :) <$> go (IntSet.insert r seen)
+            where
+              r = rep x
+  go IntSet.empty
 {-# INLINE dijkstraOnInt #-}
-
-{-# RULES "dijkstraOnInt" dijkstraOnN = dijkstraOnInt #-}
 
 unsafeInsert :: (Hashable a) => a -> HashSet a -> HashSet a
 unsafeInsert x = HashSet.fromMap . HashMap.unsafeInsert x () . HashSet.toMap

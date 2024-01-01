@@ -24,7 +24,7 @@ solve :: Int -> Int -> Grid Vector Int -> Int
 solve minStraight maxStraight grid =
   fromMaybe (error "no path found") $
     findFirst (\(loss, (pos, _)) -> if pos == end then Just loss else Nothing) $
-      Search.dijkstraOnN rep next [(0, start East), (0, start South)]
+      Search.dijkstraOnInt rep next [(0, start East), (0, start South)]
   where
     start dir = (Position.origin, dir)
     end = Position {row = Grid.nrows grid - 1, col = Grid.ncols grid - 1}
