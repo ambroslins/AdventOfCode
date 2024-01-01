@@ -3,7 +3,7 @@ module AdventOfCode.Day04 (solution) where
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
 import Data.Char (isDigit)
-import Data.HashSet qualified as HashSet
+import Data.IntSet qualified as IntSet
 
 solution :: Solution
 solution =
@@ -15,14 +15,13 @@ solution =
 parseCard :: Parser Int
 parseCard = do
   Parser.symbol "Card"
-  _cardId <- Parser.decimal @Int
+  Parser.skipWhile isDigit
   Parser.symbol ":"
-  winning <- Parser.takeWhile1 isDigit `sepEndBy'` Parser.takeWhile1 (== ' ')
+  winning <- Parser.decimal `sepEndBy'` Parser.takeWhile1 (== ' ')
   Parser.symbol "|"
-  numbers <- Parser.takeWhile1 isDigit `sepEndBy'` Parser.takeWhile1 (== ' ')
-  let winningSet = HashSet.fromList winning
-
-  pure $ count (`HashSet.member` winningSet) numbers
+  numbers <- Parser.decimal `sepEndBy'` Parser.takeWhile1 (== ' ')
+  let winningSet = IntSet.fromList winning
+  pure $ count (`IntSet.member` winningSet) numbers
 
 solve1 :: [Int] -> Int
 solve1 = sum . map score
@@ -32,4 +31,4 @@ solve1 = sum . map score
 solve2 :: [Int] -> Int
 solve2 = sum . foldr go []
   where
-    go c cs = 1 + sum (take c cs) : cs
+    go !c cs = 1 + sum (take c cs) : cs

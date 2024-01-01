@@ -1,8 +1,12 @@
 # Advent of Code 2023
 
 Total runtime:
-```
-Benchmark 1: cabal run
-  Time (mean ± σ):      1.353 s ±  0.024 s    [User: 1.258 s, System: 0.043 s]
-  Range (min … max):    1.332 s …  1.412 s    10 runs
-```
+| Command | Mean [s] | Min [s] | Max [s] | Relative |
+|:---|---:|---:|---:|---:|
+| `./AoC2023 +RTS -N1` | 1.054 ± 0.012 | 1.042 | 1.072 | 1.48 ± 0.02 |
+| `./AoC2023 +RTS -N2` | 0.820 ± 0.008 | 0.812 | 0.832 | 1.15 ± 0.01 |
+| `./AoC2023 +RTS -N4` | 0.714 ± 0.004 | 0.712 | 0.722 | 1.00 |
+| `./AoC2023 +RTS -N8` | 0.773 ± 0.012 | 0.752 | 0.793 | 1.08 ± 0.02 |
+| `./AoC2023 +RTS -N16` | 0.971 ± 0.022 | 0.943 | 1.013 | 1.36 ± 0.03 |
+
+Using GHC-9.6.3 (`-O2`) in WSL2 on a Ryzen 7 5700X with 32GB RAM.

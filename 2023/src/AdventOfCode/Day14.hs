@@ -41,7 +41,7 @@ totalLoad = sum . map load . Grid.cols
 roll :: Vector Char -> Vector Char
 roll v = Vector.create $ do
   w <- MVector.replicate (Vector.length v) '.'
-  let go j i = \case
+  let go !j !i = \case
         'O' -> MVector.write w j 'O' $> (j + 1)
         '#' -> MVector.write w i '#' $> (i + 1)
         _ -> pure j

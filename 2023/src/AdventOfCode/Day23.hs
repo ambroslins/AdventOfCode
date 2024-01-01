@@ -12,9 +12,10 @@ import Control.Parallel.Strategies (parMap, rseq)
 import Data.Bits (setBit, testBit)
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
-import Data.Vector (Vector)
+import Data.Vector (Vector, (!))
 import Data.Vector qualified as Vector
 import Data.Vector.Unboxed qualified as Unboxed
+import Data.Word (Word64)
 import Text.Printf (printf)
 
 type Steps = Int
@@ -42,19 +43,20 @@ solve grid =
 
 longestPath :: Graph -> Int -> Int
 longestPath graph end =
-  assert (Vector.length graph < 64) $
-    go 8 0 (BitSet 0) 0
+  assert (Vector.length graph < 64) $ go 8 0 (BitSet 0) 0
   where
     go :: Int -> Int -> BitSet -> Int -> Int
     go !j !n !seen !i
       | i == end = n
-      | i `member` seen = 0
-      | j > 0 = maximum $ parMap rseq f $ Unboxed.toList (graph Vector.! i)
-      | otherwise = Unboxed.maximum $ Unboxed.map f (graph Vector.! i)
+      | j > 0 =
+          foldl' max 0 . parMap rseq f . Unboxed.toList $
+            Unboxed.filter p (graph ! i)
+      | otherwise =
+          Unboxed.foldl' max 0 . Unboxed.map f $
+            Unboxed.filter p (graph ! i)
       where
         f (node, steps, _) = go (j - 1) (n + steps) (insert i seen) node
-
--- mapper = if i > 0 then parMap rseq else map
+        p (node, _, _) = not (member node seen)
 
 buildGraph :: Position -> Grid Unboxed.Vector Char -> (Graph, Int)
 buildGraph start grid = (Vector.fromList graph, snd $ Map.findMax nodes)
@@ -90,7 +92,7 @@ walkToJunction grid position direction =
         Just tile -> guard (tile /= '#') $> go 1 False pos direction tile
   where
     go !steps !slippery pos dir tile = case neighbors grid pos dir of
-      [(p, d, t)] -> go (steps + 1) (slippery || isslippery tile d) p d t
+      [(p, d, t)] -> go (steps + 1) (slippery || isSlippery tile d) p d t
       _ -> (pos, steps, slippery)
 
 neighbors ::
@@ -105,15 +107,15 @@ neighbors grid pos dir = do
     Nothing -> []
     Just t -> [(p, d, t) | t /= '#']
 
-isslippery :: Char -> Direction -> Bool
-isslippery tile dir = case tile of
+isSlippery :: Char -> Direction -> Bool
+isSlippery tile dir = case tile of
   '^' -> dir /= North
   '>' -> dir /= East
   'v' -> dir /= South
   '<' -> dir /= West
   _ -> False
 
-newtype BitSet = BitSet Word
+newtype BitSet = BitSet Word64
   deriving (Eq)
 
 instance Show BitSet where

@@ -19,6 +19,18 @@ solution =
       solver = solve1 &&& solve2
     }
 
+solve1 :: [(ByteString, Vector Int)] -> Int
+solve1 = sum . map (uncurry arrangements)
+
+solve2 :: [(ByteString, Vector Int)] -> Int
+solve2 = sum . parMap rseq (uncurry arrangements . unfold)
+
+unfold :: (ByteString, Vector Int) -> (ByteString, Vector Int)
+unfold (springs, groups) =
+  ( BS.intercalate "?" (replicate 5 springs),
+    Vector.concat (replicate 5 groups)
+  )
+
 parseLine :: Parser (ByteString, Vector Int)
 parseLine = do
   springs <- Parser.takeWhile1 (/= ' ') <* Parser.space
@@ -59,15 +71,3 @@ arrangements bs =
                   _ -> pure 0
               where
                 (damaged, operational) = BS.splitAt (g - 1) rest
-
-solve1 :: [(ByteString, Vector Int)] -> Int
-solve1 = sum . map (uncurry arrangements)
-
-solve2 :: [(ByteString, Vector Int)] -> Int
-solve2 = sum . parMap rseq (uncurry arrangements . unfold)
-
-unfold :: (ByteString, Vector Int) -> (ByteString, Vector Int)
-unfold (springs, groups) =
-  ( BS.intercalate "?" (replicate 5 springs),
-    Vector.concat (replicate 5 groups)
-  )
