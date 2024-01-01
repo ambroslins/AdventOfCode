@@ -29,11 +29,9 @@ solve minStraight maxStraight grid =
     start dir = (Position.origin, dir)
     end = Position {row = Grid.nrows grid - 1, col = Grid.ncols grid - 1}
     rep (Position {row, col}, dir) = (row * Grid.ncols grid + col) * 4 + fromEnum dir
-    next loss (pos, dir) =
-      {-# SCC "next" #-}
-      do
-        (p, l) <- drop (minStraight - 1) $ zip ps ls
-        [(l, (p, turnLeft dir)), (l, (p, turnRight dir))]
+    next loss (pos, dir) = do
+      (p, l) <- drop (minStraight - 1) $ zip ps ls
+      [(l, (p, turnLeft dir)), (l, (p, turnRight dir))]
       where
         ps = take maxStraight $ tail $ iterate (Position.move dir) pos
         ls = tail $ List.scanl' (+) loss $ mapMaybe (Grid.index grid) ps

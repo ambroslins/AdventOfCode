@@ -9,7 +9,6 @@ module AdventOfCode.Search
     bfsOnN,
     dijkstra,
     dijkstraOnN,
-    countUnique,
   )
 where
 
@@ -112,16 +111,6 @@ dijkstraOnInt rep children = go IntSet.empty . PQueue.fromList
 {-# INLINE dijkstraOnInt #-}
 
 {-# RULES "dijkstraOnInt" dijkstraOnN = dijkstraOnInt #-}
-
-countUnique :: (Hashable a) => [a] -> Int
-countUnique = go 0 HashSet.empty
-  where
-    go !n !seen = \case
-      [] -> n
-      (x : xs)
-        | x `HashSet.member` seen -> go n seen xs
-        | otherwise -> go (n + 1) (unsafeInsert x seen) xs
-{-# INLINE countUnique #-}
 
 unsafeInsert :: (Hashable a) => a -> HashSet a -> HashSet a
 unsafeInsert x = HashSet.fromMap . HashMap.unsafeInsert x () . HashSet.toMap
