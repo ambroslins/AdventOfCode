@@ -2,7 +2,7 @@
 
 Total runtime:
 ```
-Benchmark 1: cabal run AoC2023 -- +RTS -N
-  Time (mean ± σ):      4.229 s ±  0.116 s    [User: 20.267 s, System: 1.516 s]
-  Range (min … max):    4.052 s …  4.433 s    10 runs
+Benchmark 1: cabal run
+  Time (mean ± σ):      1.353 s ±  0.024 s    [User: 1.258 s, System: 0.043 s]
+  Range (min … max):    1.332 s …  1.412 s    10 runs
 ```

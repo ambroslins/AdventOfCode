@@ -3,11 +3,13 @@ module AdventOfCode.Day22 (solution) where
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
 import Control.DeepSeq (NFData (..))
+import Control.Parallel.Strategies (parMap, rseq)
 import Data.IntSet (IntSet)
 import Data.IntSet qualified as IntSet
 import Data.List (findIndices)
-import Data.Vector (Vector)
+import Data.Vector (Vector, (!))
 import Data.Vector qualified as Vector
+import Data.Vector.Unboxed qualified as Unboxed
 
 data Point = Point {x, y, z :: !Int}
   deriving (Eq, Show)
@@ -25,7 +27,7 @@ solution :: Solution
 solution =
   Solution
     { parser = Vector.fromList <$> parseBrick `sepEndBy'` Parser.endOfLine,
-      solver = solve1 &&& solve2
+      solver = solve
     }
 
 parsePoint :: Parser Point
@@ -42,33 +44,35 @@ parseBrick = do
   end <- parsePoint
   pure Brick {start, end}
 
-solve1 :: Vector Brick -> Int
-solve1 bricks = Vector.length bricks - required
+solve :: Vector Brick -> (Int, Int)
+solve bricks =
+  ( Vector.length bricks - IntSet.size required,
+    sum $
+      parMap
+        rseq
+        (disintegrate 0 suspended . IntSet.singleton)
+        (Unboxed.toList indices)
+  )
   where
-    dropped = dropBricks bricks
-    supportedOnlyBy = Vector.filter ((== 1) . IntSet.size) (supporters dropped)
-    required = IntSet.size $ IntSet.unions $ Vector.toList supportedOnlyBy
-
-solve2 :: Vector Brick -> Int
-solve2 bricks =
-  sum $ map (disintegrate suspended . IntSet.singleton) [0 .. Vector.length bricks - 1]
-  where
-    indices = Vector.enumFromN 0 (Vector.length bricks)
-    supportedBy = (supporters (dropBricks bricks) Vector.!)
-    suspended = Vector.dropWhile (IntSet.null . supportedBy) indices
-    disintegrate is falling
-      | Vector.null fall = 0
+    supportedBy = supporters (dropBricks bricks)
+    required =
+      Vector.foldl' (<>) IntSet.empty $
+        Vector.filter ((== 1) . IntSet.size) supportedBy
+    indices = Unboxed.enumFromN 0 (Vector.length bricks)
+    suspended = Unboxed.dropWhile (\i -> IntSet.null (supportedBy ! i)) indices
+    disintegrate !n !is !falling
+      | Unboxed.null fall = n
       | otherwise =
-          Vector.length fall
-            + disintegrate
-              (Vector.dropWhile (< Vector.head fall) rest)
-              (falling <> fallSet)
+          disintegrate
+            (Unboxed.length fall + n)
+            (Unboxed.dropWhile (< Unboxed.head fall) rest)
+            (falling <> fallSet)
       where
         (fall, rest) =
-          Vector.partition
-            ((`IntSet.isSubsetOf` falling) . supportedBy)
+          Unboxed.partition
+            (\i -> supportedBy ! i `IntSet.isSubsetOf` falling)
             is
-        fallSet = IntSet.fromDistinctAscList . Vector.toList $ fall
+        fallSet = IntSet.fromDistinctAscList . Unboxed.toList $ fall
 
 dropBrickTo :: Int -> Brick -> Brick
 dropBrickTo height Brick {start, end} =
