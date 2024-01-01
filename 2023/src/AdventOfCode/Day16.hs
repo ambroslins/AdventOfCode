@@ -5,32 +5,31 @@ import AdventOfCode.Grid qualified as Grid
 import AdventOfCode.Position qualified as Position
 import AdventOfCode.Prelude
 import Control.Parallel.Strategies (parMap, rseq)
-import Data.HashSet qualified as HashSet
+import Data.IntSet qualified as IntSet
 import Data.Vector.Unboxed (Vector)
 
 solution :: Solution
 solution =
   Solution
     { parser = Grid.parse,
-      solver = solve1 &&& solve2
+      solver = solve
     }
 
-solve1 :: Grid Vector Char -> Int
-solve1 grid = energizedTiles grid (Position {row = 0, col = 0}, East)
-
-solve2 :: Grid Vector Char -> Int
-solve2 grid = maximum $ parMap rseq (energizedTiles grid) starts
+solve :: Grid Vector Char -> (Int, Int)
+solve grid = (part1, part2)
   where
-    starts = top <> bottom <> left <> right
+    part1 = energizedTiles grid (Position {row = 0, col = 0}, East)
+    part2 = foldl' max part1 $ parMap rseq (energizedTiles grid) starts
+    starts = left <> right <> top <> bottom
     top = [(Position {row = 0, col}, South) | col <- [0 .. c]]
     bottom = [(Position {row = r, col}, North) | col <- [0 .. c]]
-    left = [(Position {row, col = 0}, East) | row <- [0 .. r]]
+    left = [(Position {row, col = 0}, East) | row <- [1 .. r]]
     right = [(Position {row, col = c}, West) | row <- [0 .. r]]
     r = Grid.nrows grid - 1
     c = Grid.ncols grid - 1
 
 energizedTiles :: Grid Vector Char -> (Position, Direction) -> Int
-energizedTiles grid = HashSet.size . uncurry (go HashSet.empty)
+energizedTiles grid = IntSet.size . uncurry (go IntSet.empty)
   where
     go !energized !pos !dir =
       case Grid.index grid pos of
@@ -47,14 +46,14 @@ energizedTiles grid = HashSet.size . uncurry (go HashSet.empty)
           South -> East
           West -> North
         Just '|'
-          | pos `HashSet.member` energized -> energized
+          | r `IntSet.member` energized -> energized
           | dir `elem` [North, South] -> goNext dir
           | otherwise -> go (goNext North) (Position.move South pos) South
         Just '-'
-          | pos `HashSet.member` energized -> energized
+          | r `IntSet.member` energized -> energized
           | dir `elem` [East, West] -> goNext dir
           | otherwise -> go (goNext East) (Position.move West pos) West
         Just c -> error $ "invalid tile: " <> show c
       where
-        goNext d =
-          go (HashSet.insert pos energized) (Position.move d pos) d
+        r = row pos * Grid.ncols grid + col pos
+        goNext d = go (IntSet.insert r energized) (Position.move d pos) d
