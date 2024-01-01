@@ -22,7 +22,7 @@ solve1 = sum . map (load . roll) . Grid.cols
 solve2 :: Grid Vector Char -> Int
 solve2 grid =
   totalLoad $
-    case findLoop $ map (Vector.elemIndices 'O' . Grid.cells) cycles of
+    case findCycle $ map Grid.cells cycles of
       Nothing -> last cycles
       Just (loopLength, loopStart) ->
         cycles !! (((n - loopStart) `mod` loopLength) + loopStart)
@@ -57,8 +57,8 @@ cycle = east . south . west . north
     south = Grid.fromCols . map reverseRoll . Grid.cols
     east = Grid.fromRows . map reverseRoll . Grid.rows
 
-findLoop :: (Ord a) => [a] -> Maybe (Int, Int)
-findLoop = go Map.empty 0
+findCycle :: (Ord a) => [a] -> Maybe (Int, Int)
+findCycle = go Map.empty 0
   where
     go seen !i = \case
       [] -> Nothing
