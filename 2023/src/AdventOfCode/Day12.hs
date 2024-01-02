@@ -2,15 +2,12 @@ module AdventOfCode.Day12 (solution) where
 
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
-import Control.Monad.State.Strict (State)
-import Control.Monad.State.Strict qualified as State
+import Control.Monad.ST (ST, runST)
 import Control.Parallel.Strategies (parMap, rseq)
 import Data.ByteString.Char8 qualified as BS
-import Data.HashMap.Strict qualified as HashMap
-import Data.Vector.Unboxed (Vector)
+import Data.Vector.Unboxed (MVector, Vector)
 import Data.Vector.Unboxed qualified as Vector
-
-type Cache = HashMap Int Int
+import Data.Vector.Unboxed.Mutable qualified as MVector
 
 solution :: Solution
 solution =
@@ -38,36 +35,37 @@ parseLine = do
   pure (springs, Vector.fromList groups)
 
 arrangements :: ByteString -> Vector Int -> Int
-arrangements bs =
-  flip State.evalState HashMap.empty . go bs
+arrangements springs groups = runST $ do
+  seen <- MVector.replicate (BS.length springs * (Vector.length groups + 1)) (-1)
+  go seen springs groups
   where
-    memo :: ByteString -> Vector Int -> State Cache Int
-    memo springs groups =
-      State.gets (HashMap.lookup key) >>= \case
-        Just n -> pure n
-        Nothing -> do
-          n <- go springs groups
-          State.modify (HashMap.insert key n)
-          pure n
+    memo :: MVector s Int -> ByteString -> Vector Int -> ST s Int
+    memo seen s gs = do
+      n <- MVector.read seen key
+      if n >= 0
+        then pure n
+        else do
+          m <- go seen s gs
+          MVector.write seen key m
+          pure m
       where
-        key = BS.length springs + Vector.length groups * (BS.length bs + 1)
-    go :: ByteString -> Vector Int -> State Cache Int
-    go springs groups =
-      case Vector.uncons groups of
-        Nothing -> pure $ if '#' `BS.elem` springs then 0 else 1
-        Just (g, gs) -> case BS.uncons $ BS.dropWhile (== '.') springs of
-          Just ('#', rest) -> closeGroup rest
-          Just ('?', rest) -> do
-            n1 <- closeGroup rest
-            n2 <- memo rest groups
-            pure (n1 + n2)
-          _ -> pure 0
-          where
-            closeGroup rest
-              | BS.length rest < g - 1 || '.' `BS.elem` damaged = pure 0
-              | otherwise = case BS.uncons operational of
-                  Nothing | Vector.null gs -> pure 1
-                  Just (x, xs) | x /= '#' -> memo xs gs
-                  _ -> pure 0
-              where
-                (damaged, operational) = BS.splitAt (g - 1) rest
+        key = BS.length s + Vector.length gs * BS.length springs
+    go :: MVector s Int -> ByteString -> Vector Int -> ST s Int
+    go seen s grps = case Vector.uncons grps of
+      Nothing -> pure $ if '#' `BS.elem` s then 0 else 1
+      Just (g, gs) -> case BS.uncons $ BS.dropWhile (== '.') s of
+        Just ('#', rest) -> closeGroup rest
+        Just ('?', rest) -> do
+          n1 <- closeGroup rest
+          n2 <- memo seen rest grps
+          pure (n1 + n2)
+        _ -> pure 0
+        where
+          closeGroup rest
+            | BS.length rest < g - 1 || '.' `BS.elem` damaged = pure 0
+            | otherwise = case BS.uncons operational of
+                Nothing | Vector.null gs -> pure 1
+                Just (x, xs) | x /= '#' -> memo seen xs gs
+                _ -> pure 0
+            where
+              (damaged, operational) = BS.splitAt (g - 1) rest
