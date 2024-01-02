@@ -22,23 +22,38 @@ digitToInt c = ord c - ord '0'
 
 solve :: Int -> Int -> Grid Vector Int -> Int
 solve minStraight maxStraight grid =
-  fromMaybe (error "no path found") $
-    findFirst (\(loss, (pos, _)) -> if pos == end then Just loss else Nothing) $
-      Search.dijkstraOnInt rep next [(0, start East), (0, start South)]
+  fromMaybe (error "no path found")
+    . findFirst (\(loss, (pos, _)) -> if pos == end then Just loss else Nothing)
+    $ Search.dijkstraOnInt
+      (perfectHash $ Grid.ncols grid)
+      next
+      [(0, start East), (0, start South)]
   where
     start dir = (Position.origin, dir)
     end = Position {row = Grid.nrows grid - 1, col = Grid.ncols grid - 1}
-    rep (Position {row, col}, dir) = (row * Grid.ncols grid + col) * 4 + fromEnum dir
     next !loss (!pos, !dir) = do
+      d <- [turnLeft dir, turnRight dir]
+      let move = Position.move d
+          ps =
+            Vector.takeWhile (`Grid.inside` grid) $
+              Vector.iterateN maxStraight move (move pos)
+          ls =
+            Vector.postscanl' (+) loss $
+              Vector.map (Grid.unsafeIndex grid) ps
       (p, l) <- Vector.toList $ Vector.drop (minStraight - 1) $ Vector.zip ps ls
-      [(l, (p, turnLeft dir)), (l, (p, turnRight dir))]
-      where
-        move = Position.move dir
-        ps = Vector.iterateN maxStraight move (move pos)
-        ls =
-          Vector.postscanl' (+) loss $
-            Vector.map (Grid.unsafeIndex grid) $
-              Vector.takeWhile (`Grid.inside` grid) ps
+      pure (l, (p, d))
+{-# INLINE solve #-}
+
+-- | Perfect hash function for positions and directions.
+-- Because we turn left and right at each step we only care about
+-- facing horizontally or vertically.
+perfectHash :: Int -> (Position, Direction) -> Int
+perfectHash ncols (Position {row, col}, dir) =
+  (row * ncols + col) * 2 + case dir of
+    North -> 1
+    East -> 0
+    South -> 1
+    West -> 0
 
 findFirst :: (a -> Maybe b) -> [a] -> Maybe b
 findFirst f = go

@@ -37,13 +37,13 @@ null (BucketQueue ref) = do
 enqueue :: BucketQueue s a -> Int -> a -> ST s ()
 enqueue (BucketQueue ref) p x = do
   BQ {firstNonEmpty, buckets} <- readSTRef ref
-  let d = p - MVector.length buckets
+  let l = MVector.length buckets
   bs <-
-    if d < 0
+    if p < l
       then pure buckets
       else do
-        bs <- MVector.grow buckets (d + 1)
-        traverse_ (flip (MVector.write bs) []) [MVector.length buckets .. p]
+        bs <- MVector.grow buckets $ max l (p - l + 1)
+        traverse_ (\i -> MVector.write bs i []) [l .. MVector.length bs - 1]
         pure bs
   MVector.modify bs (x :) p
   writeSTRef ref $
@@ -67,9 +67,11 @@ dequeue (BucketQueue ref) = do
         x : xs -> do
           MVector.write buckets firstNonEmpty xs
           pure $ Just (firstNonEmpty, x)
+{-# INLINE dequeue #-}
 
 enqueueList :: BucketQueue s a -> [(Int, a)] -> ST s ()
 enqueueList bq = traverse_ (uncurry (enqueue bq))
+{-# INLINE enqueueList #-}
 
 fromList :: Int -> [(Int, a)] -> ST s (BucketQueue s a)
 fromList n xs = do
