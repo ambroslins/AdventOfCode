@@ -16,14 +16,13 @@ solution =
     }
 
 solve :: Grid Vector Char -> (Int, Int)
-solve grid = (part1, part2)
+solve grid = (head energized, maximum energized)
   where
-    part1 = energizedTiles grid (Position {row = 0, col = 0}, East)
-    part2 = foldl' max part1 $ parMap rseq (energizedTiles grid) starts
+    energized = parMap rseq (energizedTiles grid) starts
     starts = left <> right <> top <> bottom
     top = [(Position {row = 0, col}, South) | col <- [0 .. c]]
     bottom = [(Position {row = r, col}, North) | col <- [0 .. c]]
-    left = [(Position {row, col = 0}, East) | row <- [1 .. r]]
+    left = [(Position {row, col = 0}, East) | row <- [0 .. r]]
     right = [(Position {row, col = c}, West) | row <- [0 .. r]]
     r = Grid.nrows grid - 1
     c = Grid.ncols grid - 1
