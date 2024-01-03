@@ -11,7 +11,6 @@ import Data.Char (isAsciiLower, ord)
 import Data.IntMap qualified as IntMap
 import Data.IntSet (IntSet)
 import Data.IntSet qualified as IntSet
-import Data.List qualified as List
 import Data.Vector.Unboxed qualified as Vector
 
 solution :: Solution
@@ -38,11 +37,12 @@ solve input =
   where
     graph = buildGraph input
     n = Vector.length (Graph.nodes graph)
-    part1 = findFirst (uncurry $ minimumCut graph) $ do
-      i : is <- List.tails [0 .. n - 1]
-      guard $ Vector.length (Graph.neighbours graph i) > 3
-      j <- is
-      pure (i, j)
+    part1 =
+      findFirst (uncurry $ minimumCut graph) $
+        [ (start, n - 1)
+          | start <- [0 .. n - 2],
+            Vector.length (Graph.neighbours graph start) > 3
+        ]
 
 minimumCut :: Graph -> Node -> Node -> Maybe Int
 minimumCut graph start end =
@@ -50,7 +50,7 @@ minimumCut graph start end =
     Left _ -> error "no path after one or two cuts"
     Right used -> case cut used of
       Left n -> Just n
-      Right _ -> Nothing
+      Right _ -> Nothing -- more than 3 unique paths to target
   where
     cut !used =
       foldl' (flip IntSet.insert) used
