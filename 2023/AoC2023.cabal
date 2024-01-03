@@ -77,12 +77,13 @@ library
     AdventOfCode.Day25
     AdventOfCode.BucketQueue
     AdventOfCode.Interval
+    AdventOfCode.Graph
     AdventOfCode.Grid
     AdventOfCode.Main
     AdventOfCode.Parser
     AdventOfCode.Position
-    AdventOfCode.Prelude
     AdventOfCode.PQueue
+    AdventOfCode.Prelude
     AdventOfCode.Search
 
   -- other-modules:

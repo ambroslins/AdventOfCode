@@ -54,10 +54,3 @@ perfectHash ncols (Position {row, col}, dir) =
     East -> 0
     South -> 1
     West -> 0
-
-findFirst :: (a -> Maybe b) -> [a] -> Maybe b
-findFirst f = go
-  where
-    go = \case
-      [] -> Nothing
-      x : xs -> f x <|> go xs

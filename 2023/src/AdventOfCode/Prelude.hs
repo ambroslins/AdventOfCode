@@ -24,6 +24,7 @@ module AdventOfCode.Prelude
     module Data.Maybe,
     module Data.List.NonEmpty,
     (&&&),
+    findFirst,
     sortBy,
     sortOn,
     sepBy',
@@ -82,3 +83,10 @@ sepEndBy1' p sep = do
 
 count :: (Foldable f) => (a -> Bool) -> f a -> Int
 count p = foldl' (\acc x -> if p x then acc + 1 else acc) 0
+
+findFirst :: (a -> Maybe b) -> [a] -> Maybe b
+findFirst f = go
+  where
+    go = \case
+      [] -> Nothing
+      x : xs -> f x <|> go xs

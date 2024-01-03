@@ -1,23 +1,24 @@
 module AdventOfCode.Day25 (solution) where
 
+import AdventOfCode.Graph (Edge, Graph, Node)
+import AdventOfCode.Graph qualified as Graph
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
-import Control.Monad.State.Strict (runState)
-import Control.Monad.State.Strict qualified as State
-import Data.Char (isAsciiLower)
-import Data.HashMap.Strict qualified as HashMap
+import AdventOfCode.Search (bfsOnInt)
+import Control.Monad ((>=>))
+import Data.ByteString.Char8 qualified as BS
+import Data.Char (isAsciiLower, ord)
+import Data.IntMap qualified as IntMap
+import Data.IntSet (IntSet)
+import Data.IntSet qualified as IntSet
 import Data.List qualified as List
-import Data.Map.Strict qualified as Map
-import Data.Ord (comparing)
-import Data.Vector.Storable qualified as Vector
-import Numeric.LinearAlgebra (Matrix)
-import Numeric.LinearAlgebra qualified as LA
+import Data.Vector.Unboxed qualified as Vector
 
 solution :: Solution
 solution =
   Solution
     { parser = parseLine `sepEndBy'` Parser.endOfLine,
-      solver = solve1 &&& const 0
+      solver = solve
     }
 
 parseLine :: Parser (ByteString, [ByteString])
@@ -29,42 +30,54 @@ parseLine = do
 parseName :: Parser ByteString
 parseName = Parser.takeWhile1 isAsciiLower
 
-solve1 :: [(ByteString, [ByteString])] -> Int
-solve1 input = size * (n - size)
+solve :: [(ByteString, [ByteString])] -> (Int, Int)
+solve input =
+  ( maybe (error "no cut") (\m -> m * (n - m)) part1,
+    0
+  )
   where
-    adj = adjacencyMatrix input
-    n = LA.rows adj
-    size = round $ Vector.sum cut
-    pairs =
-      let m = 10
-       in LA.assoc (n, m) 0.0 $
-            concatMap
-              (\i -> [((0, i), 1.0), ((n - 40 - i, i), -1.0)])
-              [0 .. m - 1]
-    weights = foldl' (flip (<>)) pairs $ replicate 10 adj
-    cut =
-      fst
-        . List.maximumBy (comparing snd)
-        . Map.toList
-        . Map.fromListWith (+)
-        . map (,1 :: Int)
-        $ LA.toColumns (LA.step weights)
+    graph = buildGraph input
+    n = Vector.length (Graph.nodes graph)
+    part1 = findFirst (uncurry $ minimumCut graph) $ do
+      i : is <- List.tails [0 .. n - 1]
+      guard $ Vector.length (Graph.neighbours graph i) > 3
+      j <- is
+      pure (i, j)
 
-adjacencyMatrix :: [(ByteString, [ByteString])] -> Matrix Double
-adjacencyMatrix xs = LA.assoc (nodes, nodes) 0.0 edges
+minimumCut :: Graph -> Node -> Node -> Maybe Int
+minimumCut graph start end =
+  case (cut >=> cut >=> cut) IntSet.empty of
+    Left _ -> error "no path after one or two cuts"
+    Right used -> case cut used of
+      Left n -> Just n
+      Right _ -> Nothing
   where
-    (edges, (_, nodes)) =
-      runState
-        (concat <$> traverse go xs)
-        (HashMap.empty, 0)
-    nodeIndex n = do
-      (ns, i) <- State.get
-      case HashMap.lookup n ns of
-        Just j -> pure j
-        Nothing -> do
-          State.put (HashMap.insert n i ns, i + 1)
-          pure i
-    go (name, connections) = do
-      i <- nodeIndex name
-      js <- traverse nodeIndex connections
-      pure $ concatMap (\j -> [((i, j), 1.0), ((j, i), 1.0)]) js
+    cut !used =
+      foldl' (flip IntSet.insert) used
+        <$> shortestPath used graph start end
+
+shortestPath :: IntSet -> Graph -> Node -> Node -> Either Int [Edge]
+shortestPath used graph start end =
+  sizeOrPath 0 $ bfsOnInt fst (uncurry next) [(start, [])]
+  where
+    next !node !path =
+      mapMaybe (useEdge path) . Vector.toList $
+        Graph.neighbours graph node
+    useEdge !path (!edge, !node)
+      | edge `IntSet.member` used = Nothing
+      | otherwise = Just (node, edge : path)
+    sizeOrPath !n = \case
+      [] -> Left n
+      ((node, path) : rest)
+        | node == end -> Right path
+        | otherwise -> sizeOrPath (n + 1) rest
+
+buildGraph :: [(ByteString, [ByteString])] -> Graph
+buildGraph =
+  Graph.fromIntMap . IntMap.fromListWith (<>) . concatMap f
+  where
+    f (name, connections) =
+      let h = hash name
+          hs = map hash connections
+       in (h, hs) : map (,[h]) hs
+    hash = BS.foldl' (\h c -> h * 26 + (ord c - ord 'a')) 0
