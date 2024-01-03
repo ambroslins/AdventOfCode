@@ -82,7 +82,6 @@ library
     AdventOfCode.Main
     AdventOfCode.Parser
     AdventOfCode.Position
-    AdventOfCode.PQueue
     AdventOfCode.Prelude
     AdventOfCode.Search
 

@@ -4,7 +4,7 @@ import AdventOfCode.Grid (Grid)
 import AdventOfCode.Grid qualified as Grid
 import AdventOfCode.Position qualified as Position
 import AdventOfCode.Prelude
-import AdventOfCode.Search (bfsOnN)
+import AdventOfCode.Search (bfsOnInt)
 import Control.Exception (assert)
 import Data.Monoid (Sum (..))
 import Data.Vector.Unboxed (Vector)
@@ -27,8 +27,9 @@ solve1 grid =
     start = fromMaybe (error "no start") $ Grid.findPosition (== 'S') grid
 
 walk :: Grid Vector Char -> Position -> Int -> [(Int, Position)]
-walk grid start steps = bfsOnN snd (uncurry next) [(0, start)]
+walk grid start steps = bfsOnInt hash (uncurry next) [(0, start)]
   where
+    hash (_, Position {row, col}) = row * Grid.ncols grid + col
     next !n pos
       | n >= steps = []
       | otherwise = do
