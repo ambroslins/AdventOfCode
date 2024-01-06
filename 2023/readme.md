@@ -1,43 +1,49 @@
 # Advent of Code 2023
 
-### Total runtime
-| Command | Mean [ms] | Min [ms] | Max [ms] | Relative |
-|:---|---:|---:|---:|---:|
-| `./AoC2023 +RTS -N1` | 1.054 ± 0.012 | 1.042 | 1.072 | 1.48 ± 0.02 |
-| `./AoC2023 +RTS -N2` | 0.820 ± 0.008 | 0.812 | 0.832 | 1.15 ± 0.01 |
-| `./AoC2023 +RTS -N4` | 0.714 ± 0.004 | 0.712 | 0.722 | 1.00 |
-| `./AoC2023 +RTS -N8` | 0.773 ± 0.012 | 0.752 | 0.793 | 1.08 ± 0.02 |
-| `./AoC2023 +RTS -N16` | 0.971 ± 0.022 | 0.943 | 1.013 | 1.36 ± 0.03 |
+## Total runtime
+| Threads | Mean     | 
+|--------:|---------:|
+|       1 | 821.1 ms | 
+|       2 | 545.2 ms | 
+|       4 | 421.4 ms | 
+|       8 | 397.8 ms | 
+|      16 | 541.6 ms | 
 
 Using GHC-9.6.3 (`-O2`) in WSL2 on a Ryzen 7 5700X with 32GB RAM.
+Time measured with [hyperfine](https://github.com/sharkdp/hyperfine)
 
-### Benchmarks
+## Benchmarks
 | Day    | Parser  | Part 1  | Part 2  | Total   | Allocated | Copied |
 | ------ | -------:| -------:| -------:| -------:| ---------:| ------:|
-| Day 01 | 44.6 μs | 22.0 μs | 338  μs | 428  μs | 3.6 MB    |  31 KB |
-| Day 02 | 91.4 μs | 139  ns | 163  ns | 93.5 μs | 935 KB    | 1.4 KB |
-| Day 03 | 131  μs | 244  μs | 207  μs | 737  μs | 2.5 MB    | 122 KB |
-| Day 04 | 278  μs | 680  ns | 6.51 μs | 290  μs | 2.4 MB    | 2.9 KB |
-| Day 05 | 27.2 μs | 13.5 μs | 55.0 μs | 106  μs | 519 KB    | 3.1 KB |
-| Day 06 | 235  ns | 63.1 ns | 1.79 μs | 2.25 μs |  17 KB    |   9 B  |
-| Day 07 | 71.4 μs | 532  μs | 547  μs | 1.23 ms | 5.0 MB    | 157 KB |
-| Day 08 | 61.6 μs | 111  μs | 842  μs | 1.45 ms | 1.1 MB    |  28 KB |
-| Day 09 | 227  μs | 59.8 μs | 59.3 μs | 310  μs | 3.4 MB    |  67 KB |
-| Day 10 | 27.1 μs | 980  μs | 2.19 ms | 2.22 ms | 9.3 MB    | 1.6 MB |
-| Day 11 | 57.1 ns | 665  μs | 664  μs | 1.36 ms | 687 KB    | 3.7 KB |
-| Day 12 | 204  μs | 430  μs | 6.15 ms | 6.97 ms |  49 MB    | 658 KB |
-| Day 13 | 85.7 μs | 254  μs | 258  μs | 480  μs | 1.6 MB    |  32 KB |
-| Day 14 | 15.2 μs | 24.9 μs | 35.1 ms | 35.4 ms | 106 MB    | 2.3 MB |
-| Day 15 | 386  μs | 23.7 μs | 170  μs | 690  μs | 4.1 MB    | 509 KB |
-| Day 16 | 17.9 μs | 331  μs | 87.0 ms | 87.1 ms | 719 MB    | 2.2 MB |
-| Day 17 | 37.9 μs | 24.1 ms | 57.3 ms | 82.0 ms | 212 MB    |  67 MB |
-| Day 18 | 101  μs | 20.4 μs | 20.0 μs | 176  μs | 1.3 MB    |  22 KB |
-| Day 19 | 284  μs | 60.5 μs | 108  μs | 559  μs | 3.0 MB    | 102 KB |
-| Day 20 | 6.16 μs | 3.88 ms | 9.50 ms | 13.6 ms |  50 MB    | 2.4 MB |
-| Day 21 | 24.2 μs | 1.56 ms | 24.2 ms | 25.9 ms | 165 MB    | 1.5 MB |
-| Day 22 | 245  μs | 22.6 ms | 92.9 ms | 92.9 ms | 165 MB    | 1.3 MB |
-| Day 23 | 27.7 μs | 896  μs | 352  ms | 353  ms | 1.2 GB    | 433 KB |
-| Day 24 | 364  μs | 455  μs | 1.53 ms | 2.48 ms |  10 MB    |  76 KB |
-| Day 25 | 195  μs | 2.45 ms | -       | 2.71 ms |  12 MB    | 605 KB |
+| Day 01 | 62.6 μs | 23.1 μs | 445  μs | 561  μs |    3.6 MB |  17 KB |
+| Day 02 | 128  μs | 142  ns | 152  ns | 132  μs |    932 KB | 977 B  |
+| Day 03 | 176  μs | 259  μs | 226  μs | 829  μs |    2.5 MB |  61 KB |
+| Day 04 | 384  μs | 656  ns | 7.03 μs | 390  μs |    2.4 MB | 2.1 KB |
+| Day 05 | 36.6 μs | 15.6 μs | 63.7 μs | 130  μs |    519 KB | 1.7 KB |
+| Day 06 | 333  ns | 68.1 ns | 2.39 μs | 2.98 μs |     17 KB |   9 B  |
+| Day 07 | 93.8 μs | 655  μs | 638  μs | 1.44 ms |    5.0 MB |  80 KB |
+| Day 08 | 88.7 μs | 110  μs | 822  μs | 1.53 ms |    1.1 MB |  12 KB |
+| Day 09 | 341  μs | 77.6 μs | 76.8 μs | 449  μs |    3.4 MB |  37 KB |
+| Day 10 | 34.4 μs | 1.31 ms | 2.07 ms | 2.11 ms |    9.3 MB | 500 KB |
+| Day 11 | 89.6 ns | 641  μs | 653  μs | 1.31 ms |    612 KB | 2.0 KB |
+| Day 12 | 272  μs | 548  μs | 6.97 ms | 8.11 ms |     51 MB | 402 KB |
+| Day 13 | 122  μs | 278  μs | 281  μs | 542  μs |    1.6 MB |  18 KB |
+| Day 14 | 19.3 μs | 29.2 μs | 38.3 ms | 38.4 ms |    104 MB | 1.9 MB |
+| Day 15 | 457  μs | 24.7 μs | 196  μs | 797  μs |    4.1 MB | 257 KB |
+| Day 16 | 22.7 μs | 617  μs | 30.4 ms | 31.3 ms |    711 MB | 1.2 MB |
+| Day 17 | 48.7 μs | 27.0 ms | 54.3 ms | 85.6 ms |    211 MB |  42 MB |
+| Day 18 | 140  μs | 25.7 μs | 25.5 μs | 236  μs |    1.3 MB |  12 KB |
+| Day 19 | 368  μs | 70.5 μs | 138  μs | 681  μs |    3.0 MB |  52 KB |
+| Day 20 | 8.72 μs | 4.53 ms | 10.7 ms | 15.4 ms |     50 MB | 2.3 MB |
+| Day 21 | 31.2 μs | 1.98 ms | 31.1 ms | 32.6 ms |    165 MB | 810 KB |
+| Day 22 | 336  μs | 29.0 ms | 60.9 ms | 41.8 ms |    164 MB | 1.2 MB |
+| Day 23 | 35.9 μs | 1.19 ms | 69.7 ms | 68.5 ms |    1.2 GB | 173 KB |
+| Day 24 | 466  μs | 461  μs | 2.08 ms | 3.17 ms |     10 MB |  43 KB |
+| Day 25 | 257  μs | 2.77 ms |         | 3.11 ms |     12 MB | 303 KB |
 
-Each benchmarks is single threaded.
+Results are from [tasty-bench](https://hackage.haskell.org/package/tasty-bench) using
+`--time-mode wall +RTS -t -N8 -A8m`.
+The _Total_ is a separate benchmark and does not necessarily equal the sum of
+_Parser_, _Part 1_ and _Part 2_.
+Memory usage estimates are from the _Total_ benchmark.
+The `peak memory` is omitted as it is skewed by other benchmarks.

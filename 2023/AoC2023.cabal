@@ -93,6 +93,7 @@ executable AoC2023
   main-is:        Main.hs
   ghc-options:
     -threaded
+    -rtsopts
 
   -- other-modules:
   -- other-extensions:
@@ -103,6 +104,9 @@ benchmark AoC2023-bench
   import:         warnings, extensions, dependencies
   type:           exitcode-stdio-1.0
   main-is:        Main.hs
+  ghc-options:
+    -threaded
+    -rtsopts
 
   -- other-modules:
   -- other-extensions:
