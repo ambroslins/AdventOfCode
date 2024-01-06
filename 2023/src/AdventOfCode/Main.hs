@@ -35,7 +35,7 @@ import AdventOfCode.Day24 qualified as Day24
 import AdventOfCode.Day25 qualified as Day25
 import AdventOfCode.Parser (runParser)
 import AdventOfCode.Prelude
-import Control.Exception (catch)
+import Control.Exception (SomeException (..), catch, handle)
 import Control.Exception.Base (throwIO)
 import Data.ByteString qualified as BS
 import Data.Foldable (traverse_)
@@ -65,7 +65,7 @@ import Text.Printf (printf)
 
 solutions :: IntMap Solution
 solutions =
-  IntMap.fromList
+  IntMap.fromDistinctAscList
     [ (1, Day01.solution),
       (2, Day02.solution),
       (3, Day03.solution),
@@ -103,7 +103,7 @@ readInputFile day = do
         pure input
       else throwIO e
   where
-    path = "inputs/day" <> show day <> ".txt"
+    path = printf "inputs/day%d.txt" day
 
 getCookie :: IO Cookie
 getCookie = do
@@ -127,8 +127,8 @@ getCookie = do
 downloadInput :: Int -> IO ByteString
 downloadInput day = do
   cookie <- getCookie
-  let url = "https://adventofcode.com/2023/day/" <> show day <> "/input"
-  putStrLn $ "Downloading input for day " <> show day <> "..."
+  let url = printf "https://adventofcode.com/2023/day/%d/input" day
+  printf "Downloading input for day %d ... \n" day
   manager <- newManager tlsManagerSettings
   request <- parseRequest url
   let requestWithCookie = request {cookieJar = Just $ createCookieJar [cookie]}
@@ -136,7 +136,7 @@ downloadInput day = do
   let status = statusCode $ responseStatus response
   if status == 200
     then do
-      putStrLn "Download done!"
+      putStrLn "Done!"
       pure $ BS.toStrict $ responseBody response
     else
       throwIO $
@@ -183,26 +183,31 @@ showNominalDiffTime diff
 solve :: Int -> IO ()
 solve day =
   case IntMap.lookup day solutions of
-    Nothing -> putStrLn $ "No solution for day " <> show day
+    Nothing -> printf "No solution for day %d\n" day
     Just solution -> runSolution day solution
 
 runSolution :: Int -> Solution -> IO ()
-runSolution day (Solution {parser, solver}) = do
-  input <- readInputFile day
-  putStrLn $ "Day " <> show day <> ":"
+runSolution day (Solution {parser, solver}) =
+  handle handler $ do
+    printf "Day %d:\n" day
+    input <- readInputFile day
 
-  (x, parseTime) <- bench (runParser parser) input
-  printf "  Parser took %s\n" (showNominalDiffTime parseTime)
+    (x, parseTime) <- bench (runParser parser) input
+    printf "  Parser took %s\n" (showNominalDiffTime parseTime)
 
-  let result = solver x
+    let result = solver x
 
-  (part1, time1) <- bench fst result
-  printf "  Part 1 (took %s): %d\n" (showNominalDiffTime time1) part1
+    (part1, time1) <- bench fst result
+    printf "  Part 1 took %s: %d\n" (showNominalDiffTime time1) part1
 
-  (part2, time2) <- bench snd result
-  printf "  Part 2 (took %s): %d\n" (showNominalDiffTime time2) part2
+    (part2, time2) <- bench snd result
+    printf "  Part 2 took %s: %d\n" (showNominalDiffTime time2) part2
 
-  printf "  Total time: %s\n" (showNominalDiffTime (parseTime + time1 + time2))
+    printf
+      "  Total time: %s\n"
+      (showNominalDiffTime (parseTime + time1 + time2))
+  where
+    handler (SomeException e) = printf "  Error: %s\n" (show e)
 
 solveToday :: IO ()
 solveToday = today >>= solve
