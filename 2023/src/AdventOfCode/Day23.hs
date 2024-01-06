@@ -43,19 +43,19 @@ solve grid =
 
 longestPath :: Graph -> Int -> Int
 longestPath graph end =
-  assert (Vector.length graph < 64) $ go 8 0 (BitSet 0) 0
+  assert (Vector.length graph <= 64) $ go 0 0 (BitSet 0) 0
   where
     go :: Int -> Int -> BitSet -> Int -> Int
-    go !j !n !seen !i
+    go !depth !n !seen !i
       | i == end = n
-      | j > 0 =
+      | depth < 8 =
           foldl' max 0 . parMap rseq f . Unboxed.toList $
             Unboxed.filter p (graph ! i)
       | otherwise =
           Unboxed.foldl' max 0 . Unboxed.map f $
             Unboxed.filter p (graph ! i)
       where
-        f (node, steps, _) = go (j - 1) (n + steps) (insert i seen) node
+        f (node, steps, _) = go (depth + 1) (n + steps) (insert i seen) node
         p (node, _, _) = not (member node seen)
 
 buildGraph :: Position -> Grid Unboxed.Vector Char -> (Graph, Int)
