@@ -41,7 +41,6 @@ common dependencies
     , mtl
     , parallel
     , parser-combinators
-    , pqueue
     , text
     , time
     , unordered-containers
