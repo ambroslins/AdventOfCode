@@ -35,10 +35,8 @@ import AdventOfCode.Day24 qualified as Day24
 import AdventOfCode.Day25 qualified as Day25
 import AdventOfCode.Parser (runParser)
 import AdventOfCode.Prelude
-import Control.Concurrent.Async (async, wait)
-import Control.Exception (SomeException (SomeException), catch, handle)
+import Control.Exception (catch)
 import Control.Exception.Base (throwIO)
-import Control.Monad ((>=>))
 import Data.ByteString qualified as BS
 import Data.Foldable (traverse_)
 import Data.IntMap qualified as IntMap
@@ -130,7 +128,7 @@ downloadInput :: Int -> IO ByteString
 downloadInput day = do
   cookie <- getCookie
   let url = "https://adventofcode.com/2023/day/" <> show day <> "/input"
-  printf "Downloading input for day %d ..." day
+  putStrLn $ "Downloading input for day " <> show day <> "..."
   manager <- newManager tlsManagerSettings
   request <- parseRequest url
   let requestWithCookie = request {cookieJar = Just $ createCookieJar [cookie]}
@@ -158,7 +156,7 @@ today = do
 -- | Run some function f and benchmark it with the give argument.
 --
 -- Returns the result of @f x@ and the time it took to run it.
--- Will evaluate the result of @f x@ to WHNF before returning.
+-- Will evalute the result of @f x@ to WHNF before returning.
 bench :: (a -> b) -> a -> IO (b, NominalDiffTime)
 bench f x = do
   start <- getCurrentTime
@@ -185,34 +183,29 @@ showNominalDiffTime diff
 solve :: Int -> IO ()
 solve day =
   case IntMap.lookup day solutions of
-    Nothing -> printf "No solution for day %d" day
-    Just solution -> runSolution day solution >>= putStr
+    Nothing -> putStrLn $ "No solution for day " <> show day
+    Just solution -> runSolution day solution
 
-runSolution :: Int -> Solution -> IO String
-runSolution day (Solution {parser, solver}) =
-  handle handler $ do
-    input <- readInputFile day
-    (x, parseTime) <- bench (runParser parser) input
-    let result = solver x
-    (part1, time1) <- bench fst result
-    (part2, time2) <- bench snd result
-    pure $
-      unlines
-        [ printf "Day %d:" day,
-          printf "  Parser took %s" (showNominalDiffTime parseTime),
-          printf "  Part 1 (took %s): %d" (showNominalDiffTime time1) part1,
-          printf "  Part 2 (took %s): %d" (showNominalDiffTime time2) part2,
-          printf "  Total time: %s" (showNominalDiffTime (parseTime + time1 + time2))
-        ]
-  where
-    handler (SomeException e) = pure $ printf "Day %d: %s" day (show e)
+runSolution :: Int -> Solution -> IO ()
+runSolution day (Solution {parser, solver}) = do
+  input <- readInputFile day
+  putStrLn $ "Day " <> show day <> ":"
+
+  (x, parseTime) <- bench (runParser parser) input
+  printf "  Parser took %s\n" (showNominalDiffTime parseTime)
+
+  let result = solver x
+
+  (part1, time1) <- bench fst result
+  printf "  Part 1 (took %s): %d\n" (showNominalDiffTime time1) part1
+
+  (part2, time2) <- bench snd result
+  printf "  Part 2 (took %s): %d\n" (showNominalDiffTime time2) part2
+
+  printf "  Total time: %s\n" (showNominalDiffTime (parseTime + time1 + time2))
 
 solveToday :: IO ()
 solveToday = today >>= solve
 
 solveAll :: IO ()
-solveAll =
-  traverse
-    (async . uncurry runSolution)
-    (IntMap.toList solutions)
-    >>= traverse_ (wait >=> putStr)
+solveAll = traverse_ (uncurry runSolution) (IntMap.toList solutions)
