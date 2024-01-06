@@ -4,7 +4,8 @@ import AdventOfCode.Grid (Grid)
 import AdventOfCode.Grid qualified as Grid
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
-import Data.List qualified as List
+import Data.Coerce (coerce)
+import Data.Monoid (Sum (..))
 import Data.Vector.Unboxed (Unbox, Vector)
 import Data.Vector.Unboxed qualified as Vector
 
@@ -14,8 +15,17 @@ solution :: Solution
 solution =
   Solution
     { parser = Grid.parse `sepEndBy'` Parser.endOfLine,
-      solver = solve 0 &&& solve 1
+      solver = coerce . foldMap' summarize
     }
+
+summarize :: Pattern -> (Sum Int, Sum Int)
+summarize p = (Sum (score 0), Sum (score 1))
+  where
+    horizontal = zip (reflections (Grid.rows p)) [100, 200 ..]
+    vertical = zip (reflections (Grid.cols p)) [1 ..]
+    score d =
+      fromMaybe (error "no reflections") $
+        lookup d (horizontal <> vertical)
 
 -- | Number of different elements for each reflection line.
 reflections :: (Eq a, Unbox a) => [Vector a] -> [Int]
@@ -33,11 +43,3 @@ diff :: (Eq a, Unbox a) => Vector a -> Vector a -> Int
 diff xs ys =
   Vector.sum $
     Vector.zipWith (\x y -> if x == y then 0 else 1) xs ys
-
-solve :: Int -> [Pattern] -> Int
-solve d = sum . mapMaybe notes
-  where
-    notes pattern = horizontal pattern <|> vertical pattern
-    horizontal = fmap (* 100) . refs . Grid.rows
-    vertical = refs . Grid.cols
-    refs = fmap (+ 1) . List.elemIndex d . reflections
