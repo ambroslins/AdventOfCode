@@ -10,7 +10,8 @@
 |      16 | 541.6 ms | 
 
 Using GHC-9.6.3 (`-O2`) in WSL2 on a Ryzen 7 5700X with 32GB RAM.
-Time measured with [hyperfine](https://github.com/sharkdp/hyperfine)
+Time measured with [hyperfine](https://github.com/sharkdp/hyperfine).
+Solutions are executed in sequence but each solution may use multiple threads.
 
 ## Benchmarks
 | Day    | Parser  | Part 1  | Part 2  | Total   | Allocated | Copied |
