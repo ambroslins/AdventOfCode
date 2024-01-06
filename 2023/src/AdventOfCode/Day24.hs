@@ -1,22 +1,27 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedLists #-}
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 
 module AdventOfCode.Day24 (solution) where
 
 import AdventOfCode.Parser qualified as Parser
-import AdventOfCode.Prelude
-import Control.DeepSeq (NFData (rnf))
+import AdventOfCode.Prelude hiding (Position (..))
 import Data.List (tails)
 import Data.Vector.Storable qualified as Vector
-import Numeric.LinearAlgebra
-  ( Matrix,
+import GHC.TypeNats (KnownNat)
+import Numeric.LinearAlgebra.Static
+  ( L,
     R,
-    Vector,
-    assoc,
-    fromRows,
+    col,
+    extract,
     norm_2,
-    rows,
-    (!),
+    row,
+    uncol,
+    vec2,
+    vec3,
+    (#),
     (<\>),
+    (===),
   )
 
 data Vec = Vec {x, y, z :: !Double}
@@ -24,12 +29,6 @@ data Vec = Vec {x, y, z :: !Double}
 
 data Hailstone = Hailstone {position, velocity :: !Vec}
   deriving (Eq, Show)
-
-instance NFData Vec where
-  rnf v = v `seq` ()
-
-instance NFData Hailstone where
-  rnf h = h `seq` ()
 
 solution :: Solution
 solution =
@@ -76,51 +75,44 @@ solve1 hailstones = count inside $ do
   maybeToList $ intersectionXY h1 h2
 
 solve2 :: [Hailstone] -> Int
-solve2 hailstones = round $ Vector.sum $ Vector.take 3 $ newton f j x0
-  where
-    x0 = Vector.replicate (6 + rows hs) 0
-    f = differences hs
-    j = jacobian hs
-    toVector Hailstone {position = p, velocity = v} = [x p, y p, z p, x v, y v, z v]
-    hs = fromRows $ map toVector $ take 5 hailstones
+solve2 hailstones = head $ do
+  -- use the first four hailstones to solve the system of equations
+  -- three would be enough but with four we always get a unique solution
+  h1 : h2 : h3 : h4 : _ <- tails hailstones
+  let f x = system h1 x # system h2 x # system h3 x # system h4 x
+      j x = jacobian h1 x === jacobian h2 x === jacobian h3 x === jacobian h4 x
+      x0 = vec3 0 0 0 # vec3 0 0 0
+  maybe
+    []
+    (pure . round . Vector.sum . Vector.take 3 . extract)
+    (newton f j x0)
 
 newton ::
-  (Vector R -> Vector R) ->
-  (Vector R -> Matrix R) ->
-  Vector R ->
-  Vector R
-newton f j = go 0
+  (KnownNat n, KnownNat m) =>
+  (R n -> R m) ->
+  (R n -> L m n) ->
+  R n ->
+  Maybe (R n)
+newton f j = go (0 :: Int)
   where
-    go :: Int -> Vector R -> Vector R
-    go i x
-      | i >= 100 = x
-      | norm_2 fx < 1.0 = xn
-      | otherwise = go (i + 1) xn
+    go !n !x0
+      | n >= 20 = Nothing
+      | norm_2 y < 1e-6 = Just x0
+      | otherwise = go (n + 1) (x0 - uncol (j x0 <\> col y))
       where
-        fx = f x
-        xn = x - j x <\> fx
+        y = f x0
 
-differences :: Matrix R -> Vector R -> Vector R
-differences hailstones xs = Vector.generate (3 * rows hailstones) f
+system :: Hailstone -> R 6 -> R 2
+system (Hailstone (Vec xi yi zi) (Vec vxi vyi vzi)) s =
+  vec2
+    ((y - yi) * (vxi - vx) - (x - xi) * (vyi - vy))
+    ((z - zi) * (vxi - vx) - (x - xi) * (vzi - vz))
   where
-    f i = x - xi + ti * (dx - dxi)
-      where
-        (j, k) = i `divMod` 3
-        x = xs ! k
-        dx = xs ! (k + 3)
-        ti = xs ! (j + 6)
-        hailstone = hailstones ! j
-        xi = hailstone ! k
-        dxi = hailstone ! (k + 3)
+    [x, y, z, vx, vy, vz] = Vector.toList $ extract s
 
-jacobian :: Matrix R -> Vector R -> Matrix R
-jacobian hailstones xs = assoc (3 * rows hailstones, Vector.length xs) 0 $ do
-  i <- [0 .. rows hailstones - 1]
-  j <- [0, 1, 2]
-  let dx = xs ! (j + 3)
-      dxi = hailstones ! i ! (j + 3)
-      ti = xs ! (i + 6)
-  [ ((i * 3 + j, j), 1.0),
-    ((i * 3 + j, j + 3), ti),
-    ((i * 3 + j, i + 6), dx - dxi)
-    ]
+jacobian :: Hailstone -> R 6 -> L 2 6
+jacobian (Hailstone (Vec xi yi zi) (Vec vxi vyi vzi)) s =
+  row (vec3 (vy - vyi) (vxi - vx) 0 # vec3 (yi - y) (x - xi) 0)
+    === row (vec3 (vz - vzi) 0 (vxi - vx) # vec3 (zi - z) 0 (x - xi))
+  where
+    [x, y, z, vx, vy, vz] = Vector.toList $ extract s
