@@ -94,6 +94,7 @@ executable AoC2023
   ghc-options:
     -threaded
     -rtsopts
+    -with-rtsopts=-qg
 
   -- other-modules:
   -- other-extensions:
@@ -107,6 +108,7 @@ benchmark AoC2023-bench
   ghc-options:
     -threaded
     -rtsopts
+    -with-rtsopts=-qg
 
   -- other-modules:
   -- other-extensions:
