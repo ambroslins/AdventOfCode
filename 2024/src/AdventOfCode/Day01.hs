@@ -14,21 +14,21 @@ solution =
 
 parseLine :: Parser (Int, Int)
 parseLine = do
-  x <- Parser.int
+  l <- Parser.int
   Parser.whitespace
-  y <- Parser.int
-  pure (x, y)
+  r <- Parser.int
+  pure (l, r)
 
 solve :: [(Int, Int)] -> (Int, Int)
 solve lists =
-  ( sum $ zipWith (\x y -> abs (x - y)) (unfoldMap xs) (unfoldMap ys),
+  ( sum $ zipWith (\l r -> abs (l - r)) (unfoldMap ls) (unfoldMap rs),
     getSum $
       IntMap.foldMapWithKey
-        (\x n -> Sum (n * x * (IntMap.findWithDefault 0 x ys)))
-        xs
+        (\l n -> Sum (n * l * (IntMap.findWithDefault 0 l rs)))
+        ls
   )
   where
-    (xs, ys) = foldl' insert mempty lists
-    insert (mx, my) (x, y) =
-      (IntMap.insertWith (+) x 1 mx, IntMap.insertWith (+) y 1 my)
+    (ls, rs) = foldl' insert mempty lists
+    insert (ml, mr) (l, r) =
+      (IntMap.insertWith (+) l 1 ml, IntMap.insertWith (+) r 1 mr)
     unfoldMap = IntMap.foldrWithKey (\k n ns -> replicate n k <> ns) []
