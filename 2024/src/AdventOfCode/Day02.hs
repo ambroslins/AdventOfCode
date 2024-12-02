@@ -1,38 +1,41 @@
-module AdventOfCode.Day02 (solution) where
+module AdventOfCode.Day02 where
 
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
-import Data.List.NonEmpty (toList)
+import Data.List.NonEmpty qualified as NonEmpty
+import Data.Monoid (Sum (..))
 
 solution :: Solution
 solution =
   Solution
-    { parser = parseLine `sepEndBy` Parser.endOfLine,
-      solver = solve1 &&& solve2
+    { parser = parseReport `sepEndBy` Parser.endOfLine,
+      solver = solve
     }
 
-parseLine :: Parser (NonEmpty Int)
-parseLine = Parser.int `sepEndBy1` Parser.whitespace
+parseReport :: Parser (NonEmpty Int)
+parseReport = Parser.decimal `sepEndBy1'` Parser.whitespace
 
-solve1 = count safe . map toList
+solve :: [NonEmpty Int] -> (Int, Int)
+solve reports = (p1, p2)
   where
-    safe ls =
-      let diff = diffs ls
-       in all (\d -> d >= 1 && d <= 3) diff
-            || all (\d -> d <= -1 && d >= -3) diff
+    (Sum p1, Sum p2) = foldMap' (go . NonEmpty.toList) reports
+    go r
+      | safe r = (1, 1)
+      | any safe (dropLevel r) = (0, 1)
+      | otherwise = (0, 0)
 
-solve2 = count (any safe . dropLevels) . map toList
+safe :: [Int] -> Bool
+safe = \case
+  [] -> True
+  (_ : []) -> True
+  (x : y : ys)
+    | inc (y - x) -> all inc $ zipWith (-) ys (y : ys)
+    | inc (x - y) -> all inc $ zipWith (-) (y : ys) ys
+    | otherwise -> False
   where
-    safe ls =
-      let diff = diffs ls
-       in all (\d -> d >= 1 && d <= 3) diff
-            || all (\d -> d <= -1 && d >= -3) diff
+    inc d = 1 <= d && d <= 3
 
-diffs (x : xs) = go x xs
-  where
-    go y (z : zs) = (z - y) : go z zs
-    go _ [] = []
-
-dropLevels :: [a] -> [[a]]
-dropLevels (x : xs) = xs : map (x :) (dropLevels xs)
-dropLevels [] = [[]]
+dropLevel :: [a] -> [[a]]
+dropLevel = \case
+  [] -> []
+  (x : xs) -> xs : map (x :) (dropLevel xs)
