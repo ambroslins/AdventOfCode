@@ -36,6 +36,11 @@ safe = \case
     inc d = 1 <= d && d <= 3
 
 dropLevel :: [a] -> [[a]]
-dropLevel = \case
+dropLevel ls = map (`dropIndex` ls) [0 .. length ls - 1]
+
+dropIndex :: Int -> [a] -> [a]
+dropIndex !i = \case
   [] -> []
-  (x : xs) -> xs : map (x :) (dropLevel xs)
+  (x : xs)
+    | i == 0 -> xs
+    | otherwise -> x : dropIndex (i - 1) xs
