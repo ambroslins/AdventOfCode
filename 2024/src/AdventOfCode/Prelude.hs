@@ -12,6 +12,8 @@ module AdventOfCode.Prelude
     Set,
     Position (..),
     Direction (..),
+    Pair (..),
+    Triple (..),
     module Control.Applicative.Combinators,
     module Control.Applicative.Combinators.NonEmpty,
     module Control.Monad,
@@ -66,7 +68,8 @@ import Data.Maybe
 import Data.Set (Set)
 import GHC.Generics (Generic)
 
-data Solution = forall a.
+data Solution
+  = forall a.
   Solution
   { parser :: Parser a,
     solver :: a -> (Int, Int)
@@ -90,3 +93,29 @@ findFirst f = go
     go = \case
       [] -> Nothing
       x : xs -> f x <|> go xs
+
+-- | Strict Pair
+data Pair a b = Pair !a !b
+  deriving (Show, Eq, Ord)
+
+instance (Semigroup a, Semigroup b) => Semigroup (Pair a b) where
+  Pair a1 b1 <> Pair a2 b2 = Pair (a1 <> a2) (b1 <> b2)
+
+instance (Monoid a, Monoid b) => Monoid (Pair a b) where
+  mempty = Pair mempty mempty
+  mappend = (<>)
+
+-- | Strict Triple
+data Triple a b c = Triple !a !b !c
+  deriving (Show, Eq, Ord)
+
+instance
+  (Semigroup a, Semigroup b, Semigroup c) =>
+  Semigroup (Triple a b c)
+  where
+  Triple a1 b1 c1 <> Triple a2 b2 c2 =
+    Triple (a1 <> a2) (b1 <> b2) (c1 <> c2)
+
+instance (Monoid a, Monoid b, Monoid c) => Monoid (Triple a b c) where
+  mempty = Triple mempty mempty mempty
+  mappend = (<>)

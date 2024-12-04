@@ -33,6 +33,9 @@ instance NFData Direction where
 data Position = Position {row :: !Int, col :: !Int}
   deriving (Eq, Ord, Show)
 
+instance Semigroup Position where
+  Position row1 col1 <> Position row2 col2 = Position (row1 + row2) (col1 + col2)
+
 instance Hashable Position where
   hashWithSalt salt Position {row, col} = hashWithSalt salt (row, col)
 
