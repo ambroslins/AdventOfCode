@@ -1,55 +1,62 @@
 module AdventOfCode.Day04 (solution) where
 
-import AdventOfCode.Grid (Grid)
-import AdventOfCode.Grid qualified as Grid
+import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
+import Data.ByteString.Char8 qualified as BS
+import Data.ByteString.Internal (c2w)
+import Data.ByteString.Unsafe (unsafeIndex)
 import Data.Monoid (Sum (..))
-import Data.Vector.Unboxed (Vector)
-import Data.Vector.Unboxed qualified as Vector
+import Data.Word (Word8)
 
 solution :: Solution
 solution =
   Solution
-    { parser = Grid.parse,
+    { parser = Parser.takeByteString,
       solver = solve
     }
 
-solve :: Grid Vector Char -> (Int, Int)
-solve grid = (p1, p2)
+solve :: ByteString -> (Int, Int)
+solve input = (p1, p2)
   where
     Pair (Sum p1) (Sum p2) =
-      Vector.foldMap' go $
-        Grid.findPositions (== 'A') grid
-    go p = Pair (Sum $ countXmas p) (if isX p then 1 else 0)
+      foldMap' go $
+        BS.elemIndices 'A' $
+          BS.take (BS.length input - 2 * start) $
+            BS.drop start input
+    go i = Pair (Sum $ countXmas i) (if isX i then 1 else 0)
+    ncols =
+      fromMaybe (error "expected '\\n' in input") $
+        BS.elemIndex '\n' input
 
+    start = ncols + 2 -- first row + newline + first col of second row
     deltas =
-      [ Triple
-          (Position (-2 * dr) (-2 * dc)) -- X
-          (Position (-dr) (-dc)) --         M
-          --                                A (skipped)
-          (Position dr dc) --               S
-      | dr <- [-1, 0, 1],
-        dc <- [-1, 0, 1]
+      [ Triple (-2 * d) (-d) d
+      | dr <- [-ncols - 1, 0, ncols + 1], -- +1 for the \n
+        dc <- [-1, 0, 1],
+        let d = dr + dc,
+        d /= 0
       ]
 
-    countXmas p =
-      count
-        ( \(Triple dx dm ds) ->
-            Grid.index grid (p <> dx) == Just 'X'
-              && Grid.index grid (p <> dm) == Just 'M'
-              && Grid.index grid (p <> ds) == Just 'S'
-        )
-        deltas
+    countXmas i =
+      let !j = i + start
+       in count
+            ( \(Triple dx dm ds) ->
+                input BS.!? (j + dx) == Just 'X'
+                  && unsafeIndex input (j + dm) == m
+                  && unsafeIndex input (j + ds) == s
+            )
+            deltas
 
-    isX (Position row col)
-      | Just nw <- Grid.index grid (Position (row - 1) (col - 1)),
-        Just ne <- Grid.index grid (Position (row - 1) (col + 1)),
-        Just sw <- Grid.index grid (Position (row + 1) (col - 1)),
-        Just se <- Grid.index grid (Position (row + 1) (col + 1)) =
-          diag nw se && diag ne sw
-      | otherwise = False
+    isX i = diag (nw, se) && diag (ne, sw)
+      where
+        !j = i + start
+        !nw = unsafeIndex input (j - ncols - 2)
+        !ne = unsafeIndex input (j - ncols)
+        !sw = unsafeIndex input (j + ncols)
+        !se = unsafeIndex input (j + ncols + 2)
 
-    diag x y = case x of
-      'M' -> y == 'S'
-      'S' -> y == 'M'
-      _ -> False
+    diag p = p == (s, m) || p == (m, s)
+
+m, s :: Word8
+m = c2w 'M'
+s = c2w 'S'
