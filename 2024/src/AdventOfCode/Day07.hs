@@ -2,11 +2,17 @@ module AdventOfCode.Day07 (solution) where
 
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
-import Control.Parallel.Strategies (parMap, rseq)
-import Data.List.NonEmpty qualified as NonEmpty
 import Data.Monoid (Sum (..))
 
-data Equation = Equation {test :: !Int, numbers :: [Int]}
+data Equation = Equation {test :: !Int, numbers :: NonEmpty Int}
+
+data Result = Equal1 | Equal2 | NotEqual
+  deriving (Eq, Show)
+
+instance Semigroup Result where
+  Equal1 <> _ = Equal1
+  Equal2 <> y = if y == NotEqual then Equal2 else y
+  NotEqual <> y = y
 
 solution :: Solution
 solution =
@@ -19,41 +25,44 @@ parseEquation :: Parser Equation
 parseEquation = do
   test <- Parser.decimal
   _ <- Parser.string ": "
-  numbers <- NonEmpty.toList <$> (Parser.decimal `sepBy1'` Parser.char ' ')
+  numbers <- Parser.decimal `sepBy1'` Parser.char ' '
   pure $ Equation {test, numbers}
 
 solve :: [Equation] -> (Int, Int)
 solve equations = (p1, p2)
   where
-    Pair (Sum p1) (Sum p2) = mconcat $ parMap rseq go equations
-    go eq@Equation {test}
-      | couldBeTrue1 eq = Pair (Sum test) (Sum test)
-      | couldBeTrue2 eq = Pair 0 (Sum test)
-      | otherwise = Pair 0 0
+    Pair (Sum p1) (Sum p2) = foldMap' go equations
+    go eq@Equation {test} = case couldBeTrue eq of
+      Equal1 -> Pair (Sum test) (Sum test)
+      Equal2 -> Pair 0 (Sum test)
+      NotEqual -> Pair 0 0
 
-couldBeTrue1 :: Equation -> Bool
-couldBeTrue1 Equation {test, numbers} = go 0 numbers
+couldBeTrue :: Equation -> Result
+couldBeTrue Equation {test, numbers = n :| ns} =
+  go True test (reverse ns)
   where
-    go !acc = \case
-      [] -> acc == test
-      n : ns
-        | acc > test -> False
-        | otherwise -> go (acc + n) ns || go (acc * n) ns
+    go !p1 !acc = \case
+      []
+        | acc /= n -> NotEqual
+        | p1 -> Equal1
+        | otherwise -> Equal2
+      x : xs -> add <> mul <> cat
+        where
+          add = let d = acc - x in ensure (d >= 0) (go p1 d xs)
+          mul =
+            let (q, r) = acc `quotRem` x
+             in ensure (r == 0) (go p1 q xs)
+          cat =
+            let (q, r) = acc `quotRem` base x
+             in ensure (r == x) (go False q xs)
 
-couldBeTrue2 :: Equation -> Bool
-couldBeTrue2 Equation {test, numbers} = go 0 numbers
-  where
-    go !acc = \case
-      [] -> acc == test
-      n : ns
-        | acc > test -> False
-        | otherwise -> go (acc + n) ns || go (acc * n) ns || go (acc ||| n) ns
+ensure :: Bool -> Result -> Result
+ensure p r = if p then r else NotEqual
 
-(|||) :: Int -> Int -> Int
-x ||| y = x * b + y
-  where
-    b
-      | y < 10 = 10
-      | y < 100 = 100
-      | y < 1000 = 1000
-      | otherwise = error "(|||): rhs too large"
+base :: Int -> Int
+base n
+  | n < 10 = 10
+  | n < 100 = 100
+  | n < 1000 = 1000
+  | n < 10000 = 10000
+  | otherwise = error "base: n too large"
