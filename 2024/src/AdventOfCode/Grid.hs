@@ -21,19 +21,29 @@ module AdventOfCode.Grid
     unsafeIndex,
     findPosition,
     findPositions,
+    create,
+    newMutable,
+    unsafeThaw,
+    read,
+    readMaybe,
+    write,
+    modify,
   )
 where
 
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude hiding (col, row)
 import Control.Monad (when)
+import Control.Monad.ST.Strict (ST, runST)
 import Data.ByteString.Char8 qualified as BS
 import Data.List qualified as List
 import Data.Vector qualified as Boxed
-import Data.Vector.Generic (Vector)
+import Data.Vector.Generic (Mutable, Vector)
 import Data.Vector.Generic qualified as Vector
+import Data.Vector.Generic.Mutable (MVector)
+import Data.Vector.Generic.Mutable qualified as MVector
 import Data.Vector.Unboxed qualified as Unboxed
-import Prelude hiding (map)
+import Prelude hiding (map, read)
 
 data Grid v a = Grid
   { ncols :: !Int,
@@ -152,3 +162,43 @@ findPositions p Grid {ncols, cells} =
     Vector.convert $
       Vector.findIndices p cells
 {-# INLINE findPositions #-}
+
+create :: (Vector v a) => (forall s. ST s (Grid (Mutable v s) a)) -> Grid v a
+create m = runST $ do
+  grid <- m
+  cs <- Vector.unsafeFreeze (cells grid)
+  pure $ grid {cells = cs}
+{-# INLINEABLE create #-}
+
+newMutable :: (Vector v a) => Int -> Int -> a -> ST s (Grid (Mutable v s) a)
+newMutable nrows ncols x = do
+  cells <- MVector.replicate (nrows * ncols) x
+  pure $ Grid {nrows, ncols, cells}
+{-# INLINEABLE newMutable #-}
+
+unsafeThaw :: (Vector v a) => Grid v a -> ST s (Grid (Mutable v s) a)
+unsafeThaw grid = do
+  mcells <- Vector.unsafeThaw (cells grid)
+  pure $ grid {cells = mcells}
+{-# INLINEABLE unsafeThaw #-}
+
+read :: (MVector v a) => Grid (v s) a -> Position -> ST s a
+read Grid {cells, ncols} (Position r c) =
+  MVector.read cells (r * ncols + c)
+{-# INLINEABLE read #-}
+
+readMaybe :: (MVector v a) => Grid (v s) a -> Position -> ST s (Maybe a)
+readMaybe grid pos
+  | pos `inside` grid = Just <$> read grid pos
+  | otherwise = pure Nothing
+{-# INLINEABLE readMaybe #-}
+
+write :: (MVector v a) => Grid (v s) a -> Position -> a -> ST s ()
+write Grid {cells, ncols} (Position r c) x =
+  MVector.write cells (r * ncols + c) x
+{-# INLINEABLE write #-}
+
+modify :: (MVector v a) => Grid (v s) a -> (a -> a) -> Position -> ST s ()
+modify Grid {cells, ncols} f (Position r c) =
+  MVector.modify cells f (r * ncols + c)
+{-# INLINEABLE modify #-}
