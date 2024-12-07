@@ -30,6 +30,7 @@ module AdventOfCode.Prelude
     sortBy,
     sortOn,
     sepBy',
+    sepBy1',
     sepEndBy',
     sepEndBy1',
     count,
@@ -75,6 +76,12 @@ data Solution
     solver :: a -> (Int, Int)
   }
 
+sepBy1' :: Parser a -> Parser b -> Parser (NonEmpty a)
+sepBy1' p sep = do
+  !x <- p
+  xs <- (sep *> sepBy' p sep) <|> pure []
+  pure (x :| xs)
+
 sepEndBy' :: Parser a -> Parser b -> Parser [a]
 sepEndBy' p sep = sepBy' p sep <* optional sep
 
@@ -104,6 +111,7 @@ instance (Semigroup a, Semigroup b) => Semigroup (Pair a b) where
 instance (Monoid a, Monoid b) => Monoid (Pair a b) where
   mempty = Pair mempty mempty
   mappend = (<>)
+  mconcat = foldl' (flip mappend) mempty
 
 -- | Strict Triple
 data Triple a b c = Triple !a !b !c
@@ -119,3 +127,4 @@ instance
 instance (Monoid a, Monoid b, Monoid c) => Monoid (Triple a b c) where
   mempty = Triple mempty mempty mempty
   mappend = (<>)
+  mconcat = foldl' (flip mappend) mempty
