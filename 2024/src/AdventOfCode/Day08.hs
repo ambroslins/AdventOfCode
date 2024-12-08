@@ -33,7 +33,7 @@ solve input = assert (rest == 0) (antinodes [1], antinodes [0 ..])
                   !freq = Char.ord $ BS.index input i
                in (freq, [Vec2 x y])
           )
-        $ BS.findIndices (/= '.') input
+        $ BS.findIndices (\c -> c /= '.' && c /= '\n') input
 
     antinodes modes =
       IntSet.size $ IntSet.fromList $ map hash $ do
