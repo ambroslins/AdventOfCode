@@ -14,6 +14,7 @@ module AdventOfCode.Prelude
     Direction (..),
     Pair (..),
     Triple (..),
+    Vec2 (Vec2),
     module Control.Applicative.Combinators,
     module Control.Applicative.Combinators.NonEmpty,
     module Control.Monad,
@@ -38,6 +39,7 @@ module AdventOfCode.Prelude
 where
 
 import AdventOfCode.Position (Direction (..), Position (..))
+import AdventOfCode.Vec2 (Vec2 (Vec2))
 import Control.Applicative.Combinators hiding
   ( count,
     endBy1,

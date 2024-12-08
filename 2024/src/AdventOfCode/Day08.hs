@@ -1,36 +1,49 @@
 module AdventOfCode.Day08 (solution) where
 
-import AdventOfCode.Grid (Grid)
-import AdventOfCode.Grid qualified as Grid
+import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
-import Data.Map.Strict qualified as Map
-import Data.Set qualified as Set
-import Data.Vector.Unboxed (Vector)
-import Data.Vector.Unboxed qualified as Vector
+import AdventOfCode.Vec2 qualified as Vec2
+import Control.Exception (assert)
+import Data.ByteString.Char8 qualified as BS
+import Data.Char qualified as Char
+import Data.IntMap qualified as IntMap
+import Data.IntSet qualified as IntSet
+import Data.List qualified as List
 
 solution :: Solution
 solution =
   Solution
-    { parser = Grid.parse,
+    { parser = Parser.takeByteString,
       solver = solve
     }
 
-solve :: Grid Vector Char -> (Int, Int)
-solve grid = (antinodes [1], antinodes [0 .. 100])
+solve :: ByteString -> (Int, Int)
+solve input = assert (rest == 0) (antinodes [1], antinodes [0 ..])
   where
-    positions = Grid.findPositions (/= '.') grid
-    m =
-      Map.fromListWith (<>) $
-        [ (Grid.unsafeIndex grid p, [p])
-        | p <- Vector.toList positions
-        ]
-    antinodes range =
-      Set.size $ Set.fromList $ filter (`Grid.inside` grid) $ do
-        (_, ps) <- Map.toList m
-        Position row1 col1 <- ps
-        Position row2 col2 <- ps
-        let dr = row2 - row1
-            dc = col2 - col1
-        guard (dr /= 0 || dc /= 0)
-        n <- range
-        [Position (row1 - n * dr) (col1 - n * dc), Position (row2 + n * dr) (col2 + n * dc)]
+    ncols =
+      fromMaybe (error "solve: expected '\\n'") $
+        BS.elemIndex '\n' input
+    (nrows, rest) = BS.length input `quotRem` (ncols + 1)
+
+    nodes =
+      IntMap.fromListWith (<>)
+        $ map
+          ( \i ->
+              let (y, x) = i `quotRem` (ncols + 1)
+                  !freq = Char.ord $ BS.index input i
+               in (freq, [Vec2 x y])
+          )
+        $ BS.findIndices (/= '.') input
+
+    antinodes modes =
+      IntSet.size $ IntSet.fromList $ map hash $ do
+        (_freq, vs) <- IntMap.toList nodes
+        !v1 : ts <- List.tails vs
+        !v2 <- ts
+        let !d = (v2 - v1)
+            left = takeWhile inside $ map (\m -> v1 - Vec2.scale m d) modes
+            right = takeWhile inside $ map (\m -> v2 + Vec2.scale m d) modes
+        left ++ right
+
+    inside (Vec2 x y) = 0 <= x && x < ncols && 0 <= y && y < nrows
+    hash (Vec2 x y) = y * ncols + x

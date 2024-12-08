@@ -83,6 +83,7 @@ library
     AdventOfCode.Position
     AdventOfCode.Prelude
     AdventOfCode.Search
+    AdventOfCode.Vec2
 
   -- other-modules:
   -- other-extensions:
