@@ -2,20 +2,13 @@ module AdventOfCode.Day10 (solution) where
 
 import AdventOfCode.Grid (Grid)
 import AdventOfCode.Grid qualified as Grid
-import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Position qualified as Pos
 import AdventOfCode.Prelude
-import AdventOfCode.Search qualified as Search
-import Data.ByteString qualified as BS
 import Data.Char qualified as Char
 import Data.IntSet qualified as IntSet
-import Data.List qualified as List
-import Data.List.NonEmpty qualified as NonEmpty
+import Data.Monoid (Sum (..))
 import Data.Vector.Unboxed (Vector)
 import Data.Vector.Unboxed qualified as Vector
-import Debug.Trace (traceShow)
-import Deque.Strict qualified as Deque
-import GHC.IsList (fromList)
 
 solution :: Solution
 solution =
@@ -25,34 +18,25 @@ solution =
     }
 
 solve :: Grid Vector Int -> (Int, Int)
-solve grid =
-  ( Vector.sum $ Vector.map (count ((== 9) . fst) . trailheads) starts,
-    Vector.sum $ Vector.map (solve2) starts
-  )
+solve grid = (p1, p2)
   where
+    Pair (Sum p1) (Sum p2) = Vector.foldMap' go starts
     starts = Grid.findPositions (== 0) grid
-    trailheads start =
-      Search.bfsOnInt
-        hash
-        neighbours
-        [(0, start)]
+    go start =
+      let Pair ends distinct = walk (Pair IntSet.empty 0) (Pair 0 start)
+       in Pair (Sum $ IntSet.size ends) (Sum distinct)
 
-    solve2 start =
-      distinctPaths ((== 9) . fst) neighbours (0, start)
+    walk (Pair ends distinct) (Pair height pos)
+      | height == 9 = Pair (IntSet.insert (hash pos) ends) (distinct + 1)
+      | otherwise = foldl' walk (Pair ends distinct) (steps height pos)
+
+    steps !height !pos =
+      let !up = height + 1
+       in [ Pair up next
+          | dir <- [North, East, South, West],
+            let next = Pos.move dir pos,
+            Grid.index grid next == Just up
+          ]
 
     ncols = Grid.ncols grid
-    hash (height, Position {row, col}) = (row * ncols + col) * 10 + height
-    neighbours (height, pos) =
-      [ (fromJust nextHeight, next)
-      | dir <- [North, East, South, West],
-        let next = Pos.move dir pos,
-        let nextHeight = Grid.index grid next,
-        nextHeight == Just (height + 1)
-      ]
-
-distinctPaths :: (a -> Bool) -> (a -> [a]) -> a -> Int
-distinctPaths isEnd children = go
-  where
-    go start
-      | isEnd start = 1
-      | otherwise = sum $ (map go $ children start)
+    hash Position {row, col} = row * ncols + col

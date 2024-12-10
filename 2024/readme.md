@@ -68,12 +68,23 @@ All
       800  μs ±  70 μs, 5.2 MB allocated, 133 KB copied, 7.0 MB peak memory
  Day 08
     parse:  OK
-      38.7 ns ± 3.2 ns, 429 B  allocated,   0 B  copied, 6.0 MB peak memory,       same as baseline
+      38.7 ns ± 3.2 ns, 429 B  allocated,   0 B  copied, 6.0 MB peak memory
     part 1: OK
-      31.1 μs ± 2.9 μs, 295 KB allocated, 844 B  copied, 6.0 MB peak memory, 51% less than baseline
+      31.1 μs ± 2.9 μs, 295 KB allocated, 844 B  copied, 6.0 MB peak memory
     part 2: OK
-      81.0 μs ± 6.2 μs, 798 KB allocated, 2.3 KB copied, 6.0 MB peak memory, 31% less than baseline
+      81.0 μs ± 6.2 μs, 798 KB allocated, 2.3 KB copied, 6.0 MB peak memory
     total:  OK
-      112  μs ± 7.6 μs, 977 KB allocated, 2.5 KB copied, 6.0 MB peak memory, 37% less than baseline
+      112  μs ± 7.6 μs, 977 KB allocated, 2.5 KB copied, 6.0 MB peak memory
+
+
+  Day 10
+    parse:  OK
+      5.75 μs ± 557 ns,  60 KB allocated,  51 B  copied,  10 MB peak memory
+    part 1: OK
+      138  μs ±  12 μs, 1.4 MB allocated, 343 B  copied,  10 MB peak memory
+    part 2: OK
+      139  μs ± 9.9 μs, 1.5 MB allocated, 339 B  copied,  10 MB peak memory
+    total:  OK
+      145  μs ±  11 μs, 1.5 MB allocated, 379 B  copied,  10 MB peak memory
 ```
 
