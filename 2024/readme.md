@@ -75,8 +75,15 @@ All
       81.0 μs ± 6.2 μs, 798 KB allocated, 2.3 KB copied, 6.0 MB peak memory
     total:  OK
       112  μs ± 7.6 μs, 977 KB allocated, 2.5 KB copied, 6.0 MB peak memory
-
-
+  Day 09
+    parse:  OK
+      362  μs ±  15 μs, 3.8 MB allocated, 519 KB copied, 8.0 MB peak memory
+    part 1: OK
+      605  μs ±  43 μs, 5.1 MB allocated, 1.1 KB copied, 8.0 MB peak memory
+    part 2: OK
+      680  μs ±  48 μs, 2.5 MB allocated, 145 KB copied, 8.0 MB peak memory
+    total:  OK
+      2.95 ms ±  94 μs,  14 MB allocated, 3.1 MB copied,  13 MB peak memory
   Day 10
     parse:  OK
       5.75 μs ± 557 ns,  60 KB allocated,  51 B  copied,  10 MB peak memory
