@@ -8,7 +8,7 @@ import Control.Monad (foldM, forM_, when)
 import Control.Monad.ST.Strict (runST)
 import Data.ByteString.Char8 qualified as BS
 import Data.Char qualified as Char
-import Data.IntMap.Strict qualified as IntMap
+import Data.IntSet qualified as IntSet
 import Data.List qualified as List
 import Data.Vector.Mutable qualified as MVector
 
@@ -22,6 +22,11 @@ data File = File
 fileEnd :: File -> Int
 fileEnd f = fileStart f + fileSize f
 
+data Space = Space
+  { spaceStart :: !Int,
+    spaceSize :: !Int
+  }
+
 solution :: Solution
 solution =
   Solution
@@ -29,57 +34,59 @@ solution =
       solver = uncurry solve1 &&& uncurry solve2
     }
 
-decode :: ByteString -> ([File], IntMap Int)
+decode :: ByteString -> ([File], [Space])
 decode =
-  go 0 0 [] IntMap.empty
+  go 0 0 [] []
     . map (\c -> Char.ord c - Char.ord '0')
     . BS.unpack
   where
-    go :: Int -> Int -> [File] -> IntMap Int -> [Int] -> ([File], IntMap Int)
-    go !nextId !offset files frees = \case
+    go !nextId !offset files blanks = \case
       (size : free : rest) ->
         let f = File {fileId = nextId, fileStart = offset, fileSize = size}
+            b = Space {spaceStart = offset + size, spaceSize = free}
          in go
               (nextId + 1)
               (offset + size + free)
               (f : files)
-              (if free > 0 then IntMap.insert (offset + size) free frees else frees)
+              (if free > 0 then b : blanks else blanks)
               rest
       [size] ->
         let f = File {fileId = nextId, fileStart = offset, fileSize = size}
-         in (f : files, frees)
-      [] -> (files, frees)
+         in (f : files, blanks)
+      [] -> (files, blanks)
 
-solve1 :: [File] -> IntMap Int -> Int
-solve1 = flip (go 0)
+solve1 :: [File] -> [Space] -> Int
+solve1 files' spaces' = go 0 (reverse spaces') files'
   where
-    go !acc frees = \case
+    go !acc spaces = \case
       [] -> acc
-      f : files -> case IntMap.minViewWithKey frees of
-        Nothing -> sum $ map checksumFile (f : files)
-        Just ((offset, free), frees')
-          | offset >= fileStart f -> go (acc + checksumFile f) frees files
-          | free >= fileSize f ->
-              let newFile = f {fileStart = offset}
-                  rest = free - fileSize f
+      f : files -> case spaces of
+        [] -> sum $ map checksumFile (f : files)
+        b : bs
+          | spaceStart b >= fileStart f -> go (acc + checksumFile f) spaces files
+          | spaceSize b >= fileSize f ->
+              let newFile = f {fileStart = spaceStart b}
+                  rest = spaceSize b - fileSize f
+                  newspace = Space {spaceStart = fileEnd newFile, spaceSize = rest}
                in go
-                    (acc + checksumFile f {fileStart = offset})
+                    (acc + checksumFile f {fileStart = spaceStart b})
                     ( if rest == 0
-                        then frees'
-                        else IntMap.insert (fileEnd newFile) rest frees'
+                        then bs
+                        else newspace : bs
                     )
                     files
           | otherwise ->
-              let f1 = f {fileStart = offset, fileSize = free}
-                  f2 = f {fileSize = fileSize f - free}
-               in go (acc + checksumFile f1) frees' (f2 : files)
+              let f1 = f {fileStart = spaceStart b, fileSize = spaceSize b}
+                  f2 = f {fileSize = fileSize f - spaceSize b}
+               in go (acc + checksumFile f1) bs (f2 : files)
 
-solve2 :: [File] -> IntMap Int -> Int
-solve2 files frees = runST $ do
+solve2 :: [File] -> [Space] -> Int
+solve2 files blanks = runST $ do
   let end = fileEnd $ head files
   buckets <- MVector.replicate 10 []
-  forM_ (IntMap.toDescList frees) $
-    \(offset, free) -> MVector.modify buckets (offset :) free
+  forM_ blanks $
+    \Space {spaceStart, spaceSize} ->
+      MVector.modify buckets (spaceStart :) spaceSize
 
   let findBucket !size =
         MVector.ifoldl'
