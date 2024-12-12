@@ -20,25 +20,23 @@ solution =
 solve :: Grid VU.Vector Char -> (Int, Int)
 solve labels = runST $ do
   regions <- Grid.newMutable @VU.Vector nrows ncols (-1 :: Int)
-  areas <- MVU.replicate (nrows * ncols) (0 :: Int)
-  perimeters <- MVU.replicate (nrows * ncols) (0 :: Int)
-  sides <- MVU.replicate (nrows * ncols) (0 :: Int)
+  areas <- MVU.replicate maxRegions (0 :: Int)
+  perimeters <- MVU.replicate maxRegions (0 :: Int)
+  sides <- MVU.replicate maxRegions (0 :: Int)
   nextRegion <- newSTRef (0 :: Int)
 
-  let mark !region !label !pos = do
+  let mark !area !perimeter !region !label !pos = do
         r <- Grid.read regions pos
         if r >= 0
-          then pure ()
+          then pure $ Pair area perimeter
           else do
             Grid.write regions pos region
-            MVU.modify areas (+ 1) region
-            let move s dir =
-                  let !p = Pos.move dir pos
-                   in if Grid.index labels p == Just label
-                        then mark region label p $> s
-                        else pure (s + 1)
-            s <- foldM move 0 [North, South, East, West]
-            MVU.modify perimeters (+ s) region
+            let move (Pair a p) dir =
+                  let !next = Pos.move dir pos
+                   in if Grid.index labels next == Just label
+                        then mark a p region label next
+                        else pure $ Pair a (p + 1)
+            foldM move (Pair (area + 1) perimeter) [North, South, East, West]
       newRegion !label !pos = do
         r <- Grid.read regions pos
         if r >= 0
@@ -46,10 +44,13 @@ solve labels = runST $ do
           else do
             region <- readSTRef nextRegion
             writeSTRef nextRegion (region + 1)
-            mark region label pos
+            Pair area perimeter <- mark 0 0 region label pos
+            MVU.write areas region area
+            MVU.write perimeters region perimeter
 
-  VU.forM_ (Grid.findPositions (const True) labels) $ \pos ->
-    newRegion (Grid.unsafeIndex labels pos) pos
+  forM_ [0 .. nrows - 1] $ \row -> forM_ [0 .. ncols - 1] $ \col ->
+    let pos = Position {row, col}
+     in newRegion (Grid.unsafeIndex labels pos) pos
 
   forM_ [0 .. nrows] $ \row -> forM_ [0 .. ncols] $ \col -> do
     let reg pos = fromMaybe (-1) <$> Grid.readMaybe regions pos
@@ -76,17 +77,4 @@ solve labels = runST $ do
   pure (price1, price2)
   where
     (nrows, ncols) = Grid.size labels
-
-{-
-1 : 4  => 4
-3 : 8  => 6
-4 : 8 => 4
-5 : 12  => 6
-14 : 28 => 22
-10 : 18 => 12
-11 : 20 => 12
-12 : 18 => 10
-13 : 20 => 10
-13 : 18 => 8
-14 : 22 => 16
- -}
+    maxRegions = 1000
