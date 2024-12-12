@@ -24,6 +24,7 @@ module AdventOfCode.Grid
     create,
     newMutable,
     unsafeThaw,
+    unsafeFreeze,
     read,
     readMaybe,
     write,
@@ -181,6 +182,12 @@ unsafeThaw grid = do
   mcells <- Vector.unsafeThaw (cells grid)
   pure $ grid {cells = mcells}
 {-# INLINEABLE unsafeThaw #-}
+
+unsafeFreeze :: (Vector v a) => Grid (Mutable v s) a -> ST s (Grid v a)
+unsafeFreeze grid = do
+  mcells <- Vector.unsafeFreeze (cells grid)
+  pure $ grid {cells = mcells}
+{-# INLINEABLE unsafeFreeze #-}
 
 read :: (MVector v a) => Grid (v s) a -> Position -> ST s a
 read Grid {cells, ncols} (Position r c) =
