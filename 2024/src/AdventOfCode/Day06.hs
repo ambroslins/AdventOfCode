@@ -21,23 +21,27 @@ solution =
 
 solve :: Grid Vector Char -> (Int, Int)
 solve grid = runST $ do
-  obstacles <- Grid.unsafeThaw $ Grid.map (== '#') grid
   obstructions <- Grid.newMutable @Vector nrows ncols False
 
   visited1 <- Grid.newMutable @Vector nrows ncols (0 :: Word)
   visited2 <- Grid.newMutable @Vector nrows ncols (0 :: Word)
 
-  let doesLoop !pos !dir = do
-        bs <- Grid.read visited2 pos
-        if bs `testBit` (fromEnum dir)
-          then pure True
-          else do
-            Grid.write visited2 pos (bs `setBit` fromEnum dir)
-            let next = Pos.move dir pos
-            Grid.readMaybe obstacles next >>= \case
-              Nothing -> pure False
-              Just True -> doesLoop pos (Pos.turnRight dir)
-              Just False -> doesLoop next dir
+  let doesLoop !obs !pos !dir =
+        let walkLine !p =
+              let !next = Pos.move dir p
+               in case Grid.index obstacles next of
+                    Nothing -> Nothing
+                    Just o | o || next == obs -> Just p
+                    Just _ -> walkLine next
+         in do
+              bs <- Grid.read visited2 pos
+              if bs `testBit` (fromEnum dir)
+                then pure True
+                else do
+                  Grid.write visited2 pos (bs `setBit` fromEnum dir)
+                  case walkLine pos of
+                    Nothing -> pure False
+                    Just next -> doesLoop obs next (Pos.turnRight dir)
 
   let walk !count1 !count2 !pos !dir = do
         bs <- Grid.read visited1 pos
@@ -45,7 +49,7 @@ solve grid = runST $ do
         when (bs `testBit` fromEnum dir) $ error "solve: unexpected loop"
         Grid.write visited1 pos (bs `setBit` fromEnum dir)
         let next = Pos.move dir pos
-        Grid.readMaybe obstacles next >>= \case
+        case Grid.index obstacles next of
           Nothing -> pure (c1, count2)
           Just True -> walk c1 count2 pos (Pos.turnRight dir)
           Just False -> do
@@ -55,9 +59,7 @@ solve grid = runST $ do
                 False -> do
                   Grid.write obstructions next True
                   MVector.copy (Grid.cells visited2) (Grid.cells visited1)
-                  Grid.write obstacles next True
-                  loops <- doesLoop pos (Pos.turnRight dir)
-                  Grid.write obstacles next False
+                  loops <- doesLoop next pos (Pos.turnRight dir)
                   pure $ if loops then count2 + 1 else count2
             walk c1 c2 next dir
 
@@ -67,3 +69,4 @@ solve grid = runST $ do
       fromMaybe (error "solve: no guard") $
         Grid.findPosition (== '^') grid
     (nrows, ncols) = Grid.size grid
+    obstacles = Grid.map (== '#') grid
