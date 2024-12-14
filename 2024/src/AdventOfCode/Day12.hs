@@ -56,17 +56,13 @@ solve labels = runST $ do
     let reg pos = fromMaybe (-1) <$> Grid.readMaybe regions pos
     a <- reg $ Position {row = row - 1, col = col - 1}
     b <- reg $ Position {row = row - 1, col = col}
-    c <- reg $ Position {row = row, col = col - 1}
-    d <- reg $ Position {row = row, col = col}
+    c <- reg $ Position {row = row, col = col}
+    d <- reg $ Position {row = row, col = col - 1}
 
-    when (a >= 0 && (a /= b && a /= c || a == b && a == c && a /= d)) $
-      MVU.modify sides (+ 1) a
-    when (b >= 0 && (b /= d && b /= a || b == a && b == d && b /= c)) $
-      MVU.modify sides (+ 1) b
-    when (c >= 0 && (c /= d && c /= a || c == a && c == d && c /= b)) $
-      MVU.modify sides (+ 1) c
-    when (d >= 0 && (d /= b && d /= c || d == b && d == c && d /= a)) $
-      MVU.modify sides (+ 1) d
+    when (isCorner a b c d) $ MVU.modify sides (+ 1) a
+    when (isCorner b c d a) $ MVU.modify sides (+ 1) b
+    when (isCorner c d a b) $ MVU.modify sides (+ 1) c
+    when (isCorner d a b c) $ MVU.modify sides (+ 1) d
 
   as <- VU.unsafeFreeze areas
   ps <- VU.unsafeFreeze perimeters
@@ -78,3 +74,7 @@ solve labels = runST $ do
   where
     (nrows, ncols) = Grid.size labels
     maxRegions = 1000
+
+isCorner :: Int -> Int -> Int -> Int -> Bool
+isCorner !a !b !c !d =
+  a >= 0 && (a /= b && a /= d || a == b && a == d && a /= c)
