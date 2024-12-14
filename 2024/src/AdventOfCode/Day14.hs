@@ -53,35 +53,28 @@ solve2 :: [Robot] -> Int
 solve2 robots = runST $ do
   xs <- VU.unsafeThaw pxs
   ys <- VU.unsafeThaw pys
-  let ps = MVU.zip xs ys
-  occupied <- MVU.replicate (width * height) (-1 :: Int)
-  let stepX = MVU.iforM_ xs $
-        \i x -> MVU.write xs i $ case x + VU.unsafeIndex vxs i of
-          x'
-            | x' < 0 -> x' + width
-            | x' >= width -> x' - width
-            | otherwise -> x'
-  let stepY = MVU.iforM_ ys $
-        \i y -> MVU.write ys i $ case y + VU.unsafeIndex vys i of
-          y'
-            | y' < 0 -> y' + height
-            | y' >= height -> y' - height
-            | otherwise -> y'
-  let unique !i =
-        let go !j
-              | j >= MVU.length ps = pure True
-              | otherwise = do
-                  (x, y) <- MVU.unsafeRead ps j
-                  let !hash = x * height + y
-                  o <- MVU.exchange occupied hash i
-                  if o == i then pure False else go (j + 1)
-         in go 0
 
-  let step !i = do
-        u <- unique i
-        if u then pure i else stepX >> stepY >> step (i + 1)
+  let var v = do
+        let n = MVU.length v
+        s <- MVU.foldl' (+) 0 v
+        MVU.foldl' (\acc x -> acc + (s - n * x) * (s - n * x)) 0 v
 
-  step 0
+  let stepX !i !x = MVU.write xs i $ case x + VU.unsafeIndex vxs i of
+        x'
+          | x' < 0 -> x' + width
+          | x' >= width -> x' - width
+          | otherwise -> x'
+  let stepY !i !y = MVU.write ys i $ case y + VU.unsafeIndex vys i of
+        y'
+          | y' < 0 -> y' + height
+          | y' >= height -> y' - height
+          | otherwise -> y'
+  let variance n step ps = VU.replicateM n $ var ps <* MVU.imapM_ step ps
+
+  ix <- VU.minIndex <$> variance width stepX xs
+  iy <- VU.minIndex <$> variance height stepY ys
+
+  pure $ (ix + (width `modInverse` height) * (iy - ix) * width) `mod` (height * width)
   where
     (pxs, pys, vxs, vys) =
       VU.unzip4 $
@@ -95,3 +88,12 @@ solve2 robots = runST $ do
 width, height :: Int
 width = 101
 height = 103
+
+modInverse :: Int -> Int -> Int
+modInverse n m = go n 1
+  where
+    go !acc !i
+      | acc == 1 = i
+      | acc < 0 = go (acc + m) i
+      | acc >= m = go (acc - m) i
+      | otherwise = go (acc + n) (i + 1)
