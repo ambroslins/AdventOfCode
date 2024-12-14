@@ -120,5 +120,14 @@ All
       2.12 μs ± 164 ns, 101 B  allocated,   0 B  copied, 6.0 MB peak memory
     total:  OK
       114  μs ± 6.1 μs, 949 KB allocated,  14 KB copied, 6.0 MB peak memory
+  Day 14
+    parse:  OK
+      118  μs ± 5.5 μs, 1.4 MB allocated,  29 KB copied, 6.0 MB peak memory
+    part 1: OK
+      13.8 μs ± 1.0 μs,  94 KB allocated, 717 B  copied, 6.0 MB peak memory
+    part 2: OK
+      25.9 ms ± 872 μs,   0 B  allocated,   0 B  copied, 7.0 MB peak memory
+    total:  OK
+      26.1 ms ± 892 μs, 1.4 MB allocated,  31 KB copied, 7.0 MB peak memory
 ```
 
