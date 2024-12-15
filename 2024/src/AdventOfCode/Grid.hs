@@ -23,12 +23,14 @@ module AdventOfCode.Grid
     findPositions,
     create,
     newMutable,
+    thaw,
     unsafeThaw,
     unsafeFreeze,
     read,
     readMaybe,
     write,
     modify,
+    swap,
   )
 where
 
@@ -177,6 +179,12 @@ newMutable nrows ncols x = do
   pure $ Grid {nrows, ncols, cells}
 {-# INLINEABLE newMutable #-}
 
+thaw :: (Vector v a) => Grid v a -> ST s (Grid (Mutable v s) a)
+thaw grid = do
+  mcells <- Vector.thaw (cells grid)
+  pure $ grid {cells = mcells}
+{-# INLINEABLE thaw #-}
+
 unsafeThaw :: (Vector v a) => Grid v a -> ST s (Grid (Mutable v s) a)
 unsafeThaw grid = do
   mcells <- Vector.unsafeThaw (cells grid)
@@ -209,3 +217,8 @@ modify :: (MVector v a) => Grid (v s) a -> (a -> a) -> Position -> ST s ()
 modify Grid {cells, ncols} f (Position r c) =
   MVector.modify cells f (r * ncols + c)
 {-# INLINEABLE modify #-}
+
+swap :: (MVector v a) => Grid (v s) a -> Position -> Position -> ST s ()
+swap Grid {cells, ncols} (Position r1 c1) (Position r2 c2) =
+  MVector.swap cells (r1 * ncols + c1) (r2 * ncols + c2)
+{-# INLINEABLE swap #-}

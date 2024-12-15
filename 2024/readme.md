@@ -122,12 +122,21 @@ All
       114  μs ± 6.1 μs, 949 KB allocated,  14 KB copied, 6.0 MB peak memory
   Day 14
     parse:  OK
-      118  μs ± 5.5 μs, 1.4 MB allocated,  29 KB copied, 6.0 MB peak memory
+      122  μs ±  12 μs, 1.4 MB allocated,  29 KB copied, 6.0 MB peak memory
     part 1: OK
-      13.8 μs ± 1.0 μs,  94 KB allocated, 717 B  copied, 6.0 MB peak memory
+      14.0 μs ± 801 ns,  94 KB allocated, 720 B  copied, 6.0 MB peak memory
     part 2: OK
-      25.9 ms ± 872 μs,   0 B  allocated,   0 B  copied, 7.0 MB peak memory
+      931  μs ±  58 μs, 4.8 MB allocated, 2.2 KB copied, 6.0 MB peak memory
     total:  OK
-      26.1 ms ± 892 μs, 1.4 MB allocated,  31 KB copied, 7.0 MB peak memory
+      1.15 ms ±  99 μs, 6.3 MB allocated,  38 KB copied, 6.0 MB peak memory
+  Day 15
+    parse:  OK
+      487  μs ±  48 μs, 3.4 MB allocated, 220 KB copied, 7.0 MB peak memory
+    part 1: OK
+      206  μs ±  14 μs, 142 KB allocated,  26 B  copied, 7.0 MB peak memory
+    part 2: OK
+      569  μs ±  43 μs, 3.6 MB allocated, 784 B  copied, 7.0 MB peak memory
+    total:  OK
+      1.36 ms ± 123 μs, 7.1 MB allocated, 469 KB copied, 7.0 MB peak memory
 ```
 
