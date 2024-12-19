@@ -10,6 +10,8 @@ import Control.Monad (forM_)
 import Control.Monad.ST.Strict (runST)
 import Data.Bits (shiftR)
 import Data.Vector.Unboxed qualified as VU
+import Deque.Strict qualified as Deque
+import GHC.IsList (fromList)
 
 size :: Int
 size = 71
@@ -36,39 +38,38 @@ build ps = Grid.create $ do
 
 solve :: [Position] -> (Int, Int)
 solve ps =
-  ( fromJust $ astar 1024 corrupted,
-    binarySearch cutOff 1024 (length ps)
+  ( fromJust $ findPath 1024 corrupted,
+    binarySearch
+      cutOff
+      1024
+      (VU.maximum $ Grid.cells corrupted)
   )
   where
     corrupted = build ps
-    cutOff t = isNothing $ astar t corrupted
+    cutOff t = isNothing $ findPath t corrupted
 
-astar :: Int -> Grid VU.Vector Int -> Maybe Int
-astar !t corrupted = runST $ do
+findPath :: Int -> Grid VU.Vector Int -> Maybe Int
+findPath !t corrupted = runST $ do
   seen <- Grid.newMutable @VU.Vector nrows ncols False
-  queue <- BQ.fromList (size * 4) [(0, (start, 0))]
-  let walk =
-        BQ.dequeue queue >>= \case
-          Nothing -> pure Nothing
-          Just (_, (pos, steps))
-            | pos == end -> pure $! Just steps
-            | otherwise ->
-                Grid.read seen pos >>= \case
-                  True -> walk
-                  False -> do
-                    Grid.write seen pos True
-                    BQ.enqueueList queue (nexts pos steps)
-                    walk
-  walk
+  let walk queue = case Deque.uncons queue of
+        Nothing -> pure Nothing
+        Just ((steps, pos), q)
+          | pos == end -> pure $! Just steps
+          | otherwise ->
+              Grid.read seen pos >>= \case
+                True -> walk q
+                False -> do
+                  Grid.write seen pos True
+                  walk (q <> fromList (nexts pos steps))
+  walk $ fromList [(0, start)]
   where
     (nrows, ncols) = Grid.size corrupted
     start = Position {row = 0, col = 0}
     end = Position {row = nrows - 1, col = ncols - 1}
     nexts !pos !steps =
-      [ (steps + 1 + h, (p, steps + 1))
+      [ (steps + 1, p)
       | dir <- [North, East, South, West],
         let p = Pos.move dir pos,
-        let h = (row end - row p) + (col end - col p),
         maybe False (\b -> b == 0 || b > t) $ Grid.index corrupted p
       ]
 
