@@ -2,11 +2,11 @@ module AdventOfCode.Day19 (solution) where
 
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
-import Control.Monad (foldM)
-import Control.Parallel.Strategies (parMap, rseq)
+import Control.Monad.ST.Strict (runST)
 import Data.ByteString qualified as BS
 import Data.Char (isAsciiLower)
-import Data.HashSet qualified as HashSet
+import Data.Monoid (Sum (..))
+import Data.Vector.Unboxed.Mutable qualified as MVU
 
 type Towel = ByteString
 
@@ -21,11 +21,16 @@ solution =
         Parser.endOfLine
         designs <- parseDesing `sepEndBy'` Parser.endOfLine
         pure (towels, designs),
-      solver = uncurry solve1 &&& length . snd
+      solver = uncurry solve
     }
 
-solve1 :: [Towel] -> [Design] -> Int
-solve1 towels = count id . parMap rseq (possible towels)
+solve :: [Towel] -> [Design] -> (Int, Int)
+solve towels designs = (p1, p2)
+  where
+    Pair (Sum p1) (Sum p2) = foldMap' go designs
+    go design =
+      let options = possibleOptions towels design
+       in Pair (if options > 0 then 1 else 0) (Sum options)
 
 parseTowel :: Parser Towel
 parseTowel = Parser.takeWhile1 isAsciiLower
@@ -33,12 +38,19 @@ parseTowel = Parser.takeWhile1 isAsciiLower
 parseDesing :: Parser Design
 parseDesing = Parser.takeWhile1 isAsciiLower
 
-possible :: [Towel] -> Design -> Bool
-possible towels = isNothing . go HashSet.empty
-  where
-    go !seen design
-      | BS.null design = Nothing
-      | design `HashSet.member` seen = Just seen
-      | otherwise =
-          foldM go (HashSet.insert design seen) $
-            mapMaybe (`BS.stripPrefix` design) towels
+possibleOptions :: [Towel] -> Design -> Int
+possibleOptions towels design = runST $ do
+  memo <- MVU.replicate (BS.length design + 1) (-1)
+  let go !d
+        | BS.null d = pure 1
+        | otherwise =
+            MVU.read memo (BS.length d) >>= \case
+              m
+                | m >= 0 -> pure m
+                | otherwise -> do
+                    s <-
+                      sum
+                        <$> mapM go (mapMaybe (`BS.stripPrefix` d) towels)
+                    MVU.write memo (BS.length d) s
+                    pure s
+  go design
