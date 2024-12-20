@@ -4,10 +4,9 @@ import AdventOfCode.Grid (Grid)
 import AdventOfCode.Grid qualified as Grid
 import AdventOfCode.Position qualified as Pos
 import AdventOfCode.Prelude
-import Control.Monad (when)
-import Control.Monad.ST.Strict (runST)
+import Control.Parallel.Strategies (parMap, rseq)
+import Data.Monoid (Sum (..))
 import Data.Vector.Unboxed qualified as VU
-import Data.Vector.Unboxed.Mutable qualified as MVU
 import Deque.Strict qualified as Deque
 import GHC.IsList (fromList)
 
@@ -45,8 +44,13 @@ bfs track start end = Grid.create $ do
     (nrows, ncols) = Grid.size track
 
 solve :: Grid VU.Vector Char -> (Int, Int)
-solve grid = (cheat 2, cheat 20)
+solve grid = (part1, part2)
   where
+    Pair (Sum part1) (Sum part2) =
+      foldMap' id $
+        parMap rseq (\p -> Pair (cheat 2 p) (cheat 20 p)) $
+          VU.toList $
+            Grid.findPositions (>= 0) timesStart
     (!nrows, !ncols) = Grid.size grid
     !start = fromJust $ Grid.findPosition (== 'S') grid
     !end = fromJust $ Grid.findPosition (== 'E') grid
@@ -54,17 +58,22 @@ solve grid = (cheat 2, cheat 20)
     !timesStart = bfs track start end
     !timesEnd = bfs track end start
     !timeNoCheat = Grid.unsafeIndex timesStart end
-    cheat n = runST $ do
-      saves <- MVU.replicate timeNoCheat (0 :: Int)
-      for 1 (nrows - 2) $ \row -> for 1 (ncols - 2) $ \col -> do
-        let !pStart = Position {row, col}
-            !tStart = Grid.unsafeIndex timesStart pStart
-        when (tStart >= 0) $
-          for (max (-n) (1 - row)) (min n (nrows - row - 2)) $ \dr ->
-            for (max (abs dr - n) (1 - col)) (min (n - abs dr) (ncols - col - 2)) $ \dc ->
-              let !pEnd = Position {row = row + dr, col = col + dc}
-                  !tEnd = Grid.unsafeIndex timesEnd pEnd
-                  save = timeNoCheat - tStart - tEnd - abs dr - abs dc
-               in when (tEnd >= 0 && save > 0) $ MVU.modify saves (+ 1) save
+    cheat n p1 =
+      let t1 = Grid.unsafeIndex timesStart p1
+       in foldRange (max (-n) (1 - row p1)) (min n (nrows - row p1 - 2)) 0 $ \acc1 dr ->
+            foldRange
+              (max (abs dr - n) (1 - col p1))
+              (min (n - abs dr) (ncols - col p1 - 2))
+              acc1
+              $ \acc dc ->
+                let !p2 = Position {row = row p1 + dr, col = col p1 + dc}
+                    !t2 = Grid.unsafeIndex timesEnd p2
+                    save = timeNoCheat - t1 - t2 - abs dr - abs dc
+                 in if (t2 >= 0 && save >= 100) then acc + 1 else acc
 
-      MVU.foldl' (+) 0 $ MVU.drop 100 saves
+foldRange :: Int -> Int -> a -> (a -> Int -> a) -> a
+foldRange start stop x f = go start x
+  where
+    go !i !acc
+      | i > stop = acc
+      | otherwise = go (i + 1) (f acc i)

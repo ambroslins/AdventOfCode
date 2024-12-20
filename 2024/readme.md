@@ -176,12 +176,12 @@ All
       1.75 ms ±  90 μs, 9.8 MB allocated, 142 KB copied, 7.0 MB peak memory
   Day 20
     parse:  OK
-      30.0 μs ± 1.5 μs, 235 KB allocated, 975 B  copied, 9.0 MB peak memory
+      28.6 μs ± 2.8 μs, 233 KB allocated, 1.1 KB copied,  58 MB peak memory
     part 1: OK
-      1.27 ms ±  57 μs, 8.4 MB allocated,  19 KB copied, 9.0 MB peak memory
+      4.94 ms ± 193 μs,  13 MB allocated, 377 KB copied,  58 MB peak memory
     part 2: OK
-      23.6 ms ± 1.8 ms, 8.3 MB allocated, 2.6 KB copied, 9.0 MB peak memory
+      4.90 ms ± 391 μs,  13 MB allocated, 339 KB copied,  58 MB peak memory
     total:  OK
-      23.8 ms ± 1.2 ms, 8.4 MB allocated,  12 KB copied, 9.0 MB peak memory
+      4.83 ms ± 362 μs,  13 MB allocated, 330 KB copied,  58 MB peak memory
 ```
 
