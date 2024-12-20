@@ -35,6 +35,7 @@ module AdventOfCode.Prelude
     sepEndBy',
     sepEndBy1',
     count,
+    for,
   )
 where
 
@@ -102,6 +103,13 @@ findFirst f = go
     go = \case
       [] -> Nothing
       x : xs -> f x <|> go xs
+
+for :: (Monad m) => Int -> Int -> (Int -> m ()) -> m ()
+for !start !stop m = go start
+  where
+    go !i
+      | i > stop = pure ()
+      | otherwise = m i >> go (i + 1)
 
 -- | Strict Pair
 data Pair a b = Pair !a !b
