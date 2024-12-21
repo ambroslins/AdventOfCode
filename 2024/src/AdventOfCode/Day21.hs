@@ -28,9 +28,10 @@ solve codes =
   )
 
 solveCode :: Int -> ByteString -> Int -> Int
-solveCode robots keys code = traceShowWith (keys,) $ runST $ do
+solveCode robots keys code = runST $ do
   cache <- MVU.replicate (6 * 6 * robots) (0 :: Int)
-  let presses !n !start !target
+  let nexts n = fmap minimum . mapM (\ks -> sum <$> zipWithM (presses n) (aKey : ks) ks)
+      presses !n !start !target
         | n >= robots = pure 1
         | otherwise = do
             let i = (hash start * 6 + hash target) * robots + n
@@ -38,13 +39,12 @@ solveCode robots keys code = traceShowWith (keys,) $ runST $ do
             if c > 0
               then pure c
               else do
-                let nextKeys = press start target
-                c' <- sum <$> zipWithM (presses (n + 1)) (aKey : nextKeys) nextKeys
+                c' <- nexts (n + 1) $ press start target
                 MVU.write cache i c'
                 pure c'
 
-  let ks = pressAll $ map numericKey $ BS.unpack keys
-  n <- sum <$> zipWithM (presses 0) (aKey : ks) ks
+  let ks = map numericKey $ BS.unpack keys
+  n <- sum <$> zipWithM (\start target -> nexts 0 $ press start target) (aKey : ks) ks
   pure $ code * n
   where
     hash p = row p * 3 + col p
@@ -56,36 +56,21 @@ leftKey = Position {row = 1, col = 0}
 downKey = Position {row = 1, col = 1}
 rightKey = Position {row = 1, col = 2}
 
-pressAll :: [Key] -> [Key]
-pressAll keys = concat $ zipWith press (aKey : keys) keys
-
-press :: Key -> Key -> [Key]
+press :: Key -> Key -> [[Key]]
 press !start !target
-  | row start == 0 && col target == 0 =
-      concat
-        [ replicate (-dr) upKey,
-          replicate dr downKey,
-          replicate (-dc) leftKey,
-          [aKey]
-        ]
-  | col start == 0 && row target == 0 =
-      concat
-        [ replicate dc rightKey,
-          replicate dr downKey,
-          replicate (-dr) upKey,
-          [aKey]
-        ]
+  | row start == 0 && col target == 0 = [concat [us, ds, ls, [aKey]]]
+  | col start == 0 && row target == 0 = [concat [rs, ds, us, [aKey]]]
   | otherwise =
-      concat
-        [ replicate (-dc) leftKey,
-          replicate dr downKey,
-          replicate dc rightKey,
-          replicate (-dr) upKey,
-          [aKey]
-        ]
+      [ concat [ls, rs, ds, us, [aKey]],
+        concat [ds, us, ls, rs, [aKey]]
+      ]
   where
     !dr = row target - row start
     !dc = col target - col start
+    ls = replicate (-dc) leftKey
+    rs = replicate dc rightKey
+    us = replicate (-dr) upKey
+    ds = replicate dr downKey
 
 numericKey :: Char -> Key
 numericKey = \case
