@@ -17,49 +17,45 @@ solution =
       solver = solve
     }
 
-bfs :: Grid VU.Vector Bool -> Position -> Position -> Grid VU.Vector Int
-bfs track start end = Grid.create $ do
-  times <- Grid.newMutable @VU.Vector nrows ncols (-1 :: Int)
+racePath :: Grid VU.Vector Bool -> Position -> Grid VU.Vector Int
+racePath track start = Grid.create $ do
+  let (nrows, ncols) = Grid.size track
+  times <- Grid.newMutable nrows ncols (-1)
+  let race !t !pos !dir = do
+        Grid.write times pos t
+        let next =
+              listToMaybe
+                [ (p, d)
+                | d <- [dir, Pos.turnLeft dir, Pos.turnRight dir],
+                  let p = Pos.move d pos,
+                  Grid.unsafeIndex track p
+                ]
+        case next of
+          Nothing -> pure ()
+          Just (p, d) -> race (t + 1) p d
 
-  let race queue = case Deque.uncons queue of
-        Nothing -> pure ()
-        Just (Pair t pos, q)
-          | pos == end -> Grid.write times pos t
-          | otherwise -> do
-              t' <- Grid.read times pos
-              if t' >= 0
-                then race q
-                else do
-                  Grid.write times pos t
-                  let nexts =
-                        [ Pair (t + 1) p
-                        | dir <- [North, East, South, West],
-                          let p = Pos.move dir pos,
-                          Grid.unsafeIndex track p
-                        ]
-                  race (q <> fromList nexts)
-  race $ fromList [Pair 0 start]
+  race 0 start $
+    head
+      [ d
+      | d <- [North, East, West, South],
+        Grid.unsafeIndex track (Pos.move d start)
+      ]
   pure times
-  where
-    (nrows, ncols) = Grid.size track
 
 solve :: Grid VU.Vector Char -> (Int, Int)
 solve grid = (part1, part2)
   where
     Pair (Sum part1) (Sum part2) =
-      foldMap' id $
+      mconcat $
         parMap rseq (\p -> Pair (cheat 2 p) (cheat 20 p)) $
           VU.toList $
-            Grid.findPositions (>= 0) timesStart
-    (!nrows, !ncols) = Grid.size grid
+            Grid.findPositions (>= 0) times
+    (nrows, ncols) = Grid.size grid
     !start = fromJust $ Grid.findPosition (== 'S') grid
-    !end = fromJust $ Grid.findPosition (== 'E') grid
     !track = Grid.map (/= '#') grid
-    !timesStart = bfs track start end
-    !timesEnd = bfs track end start
-    !timeNoCheat = Grid.unsafeIndex timesStart end
+    !times = racePath track start
     cheat n p1 =
-      let t1 = Grid.unsafeIndex timesStart p1
+      let t1 = Grid.unsafeIndex times p1
        in foldRange (max (-n) (1 - row p1)) (min n (nrows - row p1 - 2)) 0 $ \acc1 dr ->
             foldRange
               (max (abs dr - n) (1 - col p1))
@@ -67,12 +63,12 @@ solve grid = (part1, part2)
               acc1
               $ \acc dc ->
                 let !p2 = Position {row = row p1 + dr, col = col p1 + dc}
-                    !t2 = Grid.unsafeIndex timesEnd p2
-                    save = timeNoCheat - t1 - t2 - abs dr - abs dc
+                    !t2 = Grid.unsafeIndex times p2
+                    save = t1 - t2 - abs dr - abs dc
                  in if (t2 >= 0 && save >= 100) then acc + 1 else acc
 
 foldRange :: Int -> Int -> a -> (a -> Int -> a) -> a
-foldRange start stop x f = go start x
+foldRange !start !stop x f = go start x
   where
     go !i !acc
       | i > stop = acc
