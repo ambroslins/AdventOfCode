@@ -4,11 +4,9 @@ import AdventOfCode.Grid (Grid)
 import AdventOfCode.Grid qualified as Grid
 import AdventOfCode.Position qualified as Pos
 import AdventOfCode.Prelude
-import Control.Parallel.Strategies (parMap, rseq)
-import Data.Monoid (Sum (..))
+import Control.Parallel.Strategies (dot, rdeepseq, rpar, runEval)
+import Data.Int (Int32)
 import Data.Vector.Unboxed qualified as VU
-import Deque.Strict qualified as Deque
-import GHC.IsList (fromList)
 
 solution :: Solution
 solution =
@@ -17,59 +15,52 @@ solution =
       solver = solve
     }
 
-racePath :: Grid VU.Vector Bool -> Position -> Grid VU.Vector Int
-racePath track start = Grid.create $ do
-  let (nrows, ncols) = Grid.size track
-  times <- Grid.newMutable nrows ncols (-1)
-  let race !t !pos !dir = do
-        Grid.write times pos t
-        let next =
-              listToMaybe
-                [ (p, d)
-                | d <- [dir, Pos.turnLeft dir, Pos.turnRight dir],
-                  let p = Pos.move d pos,
-                  Grid.unsafeIndex track p
-                ]
-        case next of
-          Nothing -> pure ()
-          Just (p, d) -> race (t + 1) p d
-
-  race 0 start $
-    head
-      [ d
-      | d <- [North, East, West, South],
-        Grid.unsafeIndex track (Pos.move d start)
-      ]
-  pure times
-
-solve :: Grid VU.Vector Char -> (Int, Int)
-solve grid = (part1, part2)
+racePath :: Grid VU.Vector Bool -> Position -> VU.Vector Position
+racePath track start =
+  VU.unfoldrExactN
+    (VU.foldl' (\acc b -> if b then acc + 1 else acc) 0 (Grid.cells track))
+    go
+    (Pair start startDir)
   where
-    Pair (Sum part1) (Sum part2) =
-      mconcat $
-        parMap rseq (\p -> Pair (cheat 2 p) (cheat 20 p)) $
-          VU.toList $
-            Grid.findPositions (>= 0) times
-    (nrows, ncols) = Grid.size grid
+    startDir =
+      head
+        [ d
+        | d <- [North, East, West, South],
+          Grid.unsafeIndex track (Pos.move d start)
+        ]
+    go (Pair pos dir) =
+      let next =
+            head
+              [ (p, d)
+              | d <- [dir, Pos.turnLeft dir, Pos.turnRight dir],
+                let p = Pos.move d pos,
+                Grid.unsafeIndex track p
+              ]
+       in (pos, uncurry Pair next)
+
+solve :: Grid VU.Vector Char -> (Int32, Int32)
+solve grid = (VU.sum part1, VU.sum part2)
+  where
+    (part1, part2) =
+      VU.unzip $
+        runEval $
+          VU.generateM
+            (VU.length path - 100)
+            (\t -> (rpar `dot` rdeepseq) (cheat 2 t, cheat 20 t))
     !start = fromJust $ Grid.findPosition (== 'S') grid
     !track = Grid.map (/= '#') grid
-    !times = racePath track start
-    cheat n p1 =
-      let t1 = Grid.unsafeIndex times p1
-       in foldRange (max (-n) (1 - row p1)) (min n (nrows - row p1 - 2)) 0 $ \acc1 dr ->
-            foldRange
-              (max (abs dr - n) (1 - col p1))
-              (min (n - abs dr) (ncols - col p1 - 2))
-              acc1
-              $ \acc dc ->
-                let !p2 = Position {row = row p1 + dr, col = col p1 + dc}
-                    !t2 = Grid.unsafeIndex times p2
-                    save = t1 - t2 - abs dr - abs dc
-                 in if (t2 >= 0 && save >= 100) then acc + 1 else acc
+    !path = racePath track start
+    cheat !n !t1 =
+      let !p1 = path VU.! t1
+          go !acc !t2
+            | t2 >= VU.length path = acc
+            | d > n = go acc (t2 + d - n)
+            | otherwise = go (if save >= 100 then acc + 1 else acc) (t2 + 1)
+            where
+              p2 = path VU.! t2
+              d = distance p1 p2
+              save = t2 - t1 - d
+       in go 0 (t1 + 100)
 
-foldRange :: Int -> Int -> a -> (a -> Int -> a) -> a
-foldRange !start !stop x f = go start x
-  where
-    go !i !acc
-      | i > stop = acc
-      | otherwise = go (i + 1) (f acc i)
+distance :: Position -> Position -> Int
+distance p1 p2 = abs (row p2 - row p1) + abs (col p2 - col p1)
