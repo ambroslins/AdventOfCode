@@ -8,7 +8,6 @@ import Control.Monad (foldM, forM_, when)
 import Control.Monad.ST.Strict (runST)
 import Data.ByteString.Char8 qualified as BS
 import Data.Char qualified as Char
-import Data.IntSet qualified as IntSet
 import Data.List qualified as List
 import Data.Vector.Mutable qualified as MVector
 

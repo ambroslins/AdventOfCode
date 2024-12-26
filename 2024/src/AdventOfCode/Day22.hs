@@ -45,28 +45,28 @@ solveSecret ::
   MVU.MVector s Word8 ->
   Word32 ->
   ST s Word64
-solveSecret i bananas seen n0 = do
-  let n1 = nextSecret n0
-      n2 = nextSecret n1
-      n3 = nextSecret n2
-      p0 = n0 `rem` 10
-      p1 = n1 `rem` 10
-      p2 = n2 `rem` 10
-      p3 = n3 `rem` 10
-  let go !j !number !p !a !b !c
-        | j <= 0 = pure $ fromIntegral number
-        | otherwise = do
-            let !next = nextSecret number
-                !price = next `rem` 10
-                !d = 9 + price - p
-                !index = fromIntegral $ 6589 * a + 361 * b + 19 * c + d
-            s <- MVU.read seen index
-            when (s /= i) $ do
-              MVU.write seen index i
-              MVU.modify bananas (+ fromIntegral price) index
-            go (j - 1) next price b c d
-
+solveSecret i bananas seen n0 =
   go (2000 - 3 :: Int32) n3 p3 (9 + p1 - p0) (9 + p2 - p1) (9 + p3 - p2)
+  where
+    n1 = nextSecret n0
+    n2 = nextSecret n1
+    n3 = nextSecret n2
+    p0 = n0 `rem` 10
+    p1 = n1 `rem` 10
+    p2 = n2 `rem` 10
+    p3 = n3 `rem` 10
+    go !j !number !p !a !b !c
+      | j <= 0 = pure $ fromIntegral number
+      | otherwise = do
+          let !next = nextSecret number
+              !price = next `rem` 10
+              !d = 9 + price - p
+              !index = fromIntegral $ 6589 * a + 361 * b + 19 * c + d
+          s <- MVU.read seen index
+          when (s /= i) $ do
+            MVU.write seen index i
+            MVU.modify bananas (+ fromIntegral price) index
+          go (j - 1) next price b c d
 
 nextSecret :: Word32 -> Word32
 nextSecret !n =

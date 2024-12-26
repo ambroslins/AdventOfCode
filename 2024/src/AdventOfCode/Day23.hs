@@ -68,21 +68,21 @@ solve2 edges =
     go !r !p !x
       | IntSet.null p && IntSet.null x = [r]
       | otherwise =
-          let u = head $ IntSet.toList p <> IntSet.toList x
-              nu = IntMap.findWithDefault IntSet.empty u edges
-              step (p', x') v =
-                let nv = IntMap.findWithDefault IntSet.empty v edges
-                 in ( (IntSet.delete v p', IntSet.insert v x'),
-                      go
+          let !u = head $ IntSet.toList p <> IntSet.toList x
+              !nu = IntMap.findWithDefault IntSet.empty u edges
+              step !p' !x' = \case
+                [] -> []
+                v : vs ->
+                  let !nv = IntMap.findWithDefault IntSet.empty v edges
+                   in go
                         (IntSet.insert v r)
                         (IntSet.intersection p' nv)
                         (IntSet.intersection x' nv)
-                    )
-           in concat $
-                snd $
-                  List.mapAccumL step (p, x) $
-                    IntSet.elems $
-                      p IntSet.\\ nu
+                        <> step
+                          (IntSet.delete v p')
+                          (IntSet.insert v x')
+                          vs
+           in step p x $ IntSet.toList $ p IntSet.\\ nu
 
 hash :: ByteString -> Int
 hash = BS.foldl' (\acc c -> acc * 26 + Char.ord c - Char.ord 'a') 0
