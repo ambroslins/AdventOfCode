@@ -17,11 +17,14 @@ benchDay day (Solution {parser, solver}) = env (readInputFile day) run
       bgroup
         (printf "Day %02d" day)
         [ bench "parse" $ whnf (runParser parser) input,
-          bench "part 1" $ nf (fst . solver) parsedInput,
-          bench "part 2" $ nf (snd . solver) parsedInput,
-          bench "total" $ nf total input
+          bench "part 1" $ whnf (fst . solver) parsedInput,
+          bench "part 2" $ whnf (snd . solver) parsedInput,
+          bench "total" $ whnf (forceTuple . total) input
         ]
       where
         parsedInput = runParser parser input
 
     total = solver . runParser parser
+
+forceTuple :: (a, b) -> (a, b)
+forceTuple (!a, !b) = (a, b)

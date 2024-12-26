@@ -198,10 +198,10 @@ runSolution day (Solution {parser, solver}) =
     let result = solver x
 
     (part1, time1) <- bench fst result
-    printf "  Part 1 took %s: %d\n" (showNominalDiffTime time1) part1
+    printf "  Part 1 took %s: %s\n" (showNominalDiffTime time1) (show part1)
 
     (part2, time2) <- bench snd result
-    printf "  Part 2 took %s: %d\n" (showNominalDiffTime time2) part2
+    printf "  Part 2 took %s: %s\n" (showNominalDiffTime time2) (show part2)
 
     printf
       "  Total time: %s\n"

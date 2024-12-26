@@ -73,10 +73,11 @@ import Data.Set (Set)
 import GHC.Generics (Generic)
 
 data Solution
-  = forall a.
+  = forall a part1 part2.
+  (Show part1, Show part2) =>
   Solution
   { parser :: Parser a,
-    solver :: a -> (Int, Int)
+    solver :: a -> (part1, part2)
   }
 
 sepBy1' :: Parser a -> Parser b -> Parser (NonEmpty a)
