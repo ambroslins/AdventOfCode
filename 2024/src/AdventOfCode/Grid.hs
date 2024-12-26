@@ -26,6 +26,7 @@ module AdventOfCode.Grid
     thaw,
     unsafeThaw,
     unsafeFreeze,
+    clone,
     read,
     readMaybe,
     write,
@@ -196,6 +197,12 @@ unsafeFreeze grid = do
   mcells <- Vector.unsafeFreeze (cells grid)
   pure $ grid {cells = mcells}
 {-# INLINEABLE unsafeFreeze #-}
+
+clone :: (Vector v a) => Grid (Mutable v s) a -> ST s (Grid (Mutable v s) a)
+clone grid = do
+  mcells <- MVector.clone (cells grid)
+  pure $ grid {cells = mcells}
+{-# INLINEABLE clone #-}
 
 read :: (MVector v a) => Grid (v s) a -> Position -> ST s a
 read Grid {cells, ncols} (Position r c) =
