@@ -201,5 +201,14 @@ All
       2.951 s ±  23 ms, 3.8 GB allocated, 2.3 GB copied, 1.1 GB peak memory
     total:  OK
       2.935 s ± 104 ms, 3.8 GB allocated, 2.3 GB copied, 1.1 GB peak memory
+  Day 23
+    parse:  OK
+      195  μs ±  11 μs, 2.4 MB allocated, 109 KB copied,  55 MB peak memory,  6% less than baseline
+    part 1: OK
+      975  μs ±  90 μs, 4.4 MB allocated, 225 KB copied,  57 MB peak memory, 73% less than baseline
+    part 2: OK
+      2.52 ms ± 191 μs, 9.7 MB allocated, 657 KB copied,  57 MB peak memory, 99% less than baseline
+    total:  OK
+      2.94 ms ± 242 μs,  12 MB allocated, 1.1 MB copied,  57 MB peak memory, 99% less than baseline
 ```
 
