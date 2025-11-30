@@ -1,0 +1,114 @@
+cabal-version:   3.4
+name:            AoC2025
+version:         0.1.0.0
+
+-- synopsis:
+-- description:
+license:         BSD-3-Clause
+license-file:    LICENSE
+author:          Ambros Lins
+maintainer:      ambros.lins@gmail.com
+
+-- copyright:
+build-type:      Simple
+extra-doc-files: CHANGELOG.md
+
+-- extra-source-files:
+
+common warnings
+  ghc-options: -Wall -Wno-x-partial
+
+common extensions
+  default-language:   GHC2021
+  default-extensions:
+    LambdaCase
+    NamedFieldPuns
+    OverloadedStrings
+
+common dependencies
+  build-depends:
+    , attoparsec
+    , base                  >=4.21.0.0
+    , bytestring
+    , containers
+    , deepseq
+    , deque
+    , directory
+    , hashable
+    , http-client
+    , http-client-tls
+    , http-types
+    , mtl
+    , parallel
+    , parser-combinators
+    , text
+    , time
+    , unordered-containers
+    , vector
+
+library
+  import:          warnings, extensions, dependencies
+  exposed-modules:
+    AdventOfCode.BucketQueue
+    AdventOfCode.Day01
+    AdventOfCode.Day02
+    AdventOfCode.Day03
+    AdventOfCode.Day04
+    AdventOfCode.Day05
+    AdventOfCode.Day06
+    AdventOfCode.Day07
+    AdventOfCode.Day08
+    AdventOfCode.Day09
+    AdventOfCode.Day10
+    AdventOfCode.Day11
+    AdventOfCode.Day12
+    AdventOfCode.Day13
+    AdventOfCode.Day14
+    AdventOfCode.Day15
+    AdventOfCode.Day16
+    AdventOfCode.Day17
+    AdventOfCode.Day18
+    AdventOfCode.Day19
+    AdventOfCode.Day20
+    AdventOfCode.Day21
+    AdventOfCode.Day22
+    AdventOfCode.Day23
+    AdventOfCode.Day24
+    AdventOfCode.Day25
+    AdventOfCode.Graph
+    AdventOfCode.Grid
+    AdventOfCode.Interval
+    AdventOfCode.Main
+    AdventOfCode.Parser
+    AdventOfCode.Position
+    AdventOfCode.Prelude
+    AdventOfCode.Search
+    AdventOfCode.Vec2
+
+  -- other-modules:
+  -- other-extensions:
+  hs-source-dirs:  src
+
+executable AoC2024
+  import:         warnings, extensions, dependencies
+  main-is:        Main.hs
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-qg
+
+  -- other-modules:
+  -- other-extensions:
+  build-depends:  AoC2025
+  hs-source-dirs: app
+
+benchmark AoC2024-bench
+  import:         warnings, extensions, dependencies
+  type:           exitcode-stdio-1.0
+  main-is:        Main.hs
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-qg
+
+  -- other-modules:
+  -- other-extensions:
+  build-depends:
+    , AoC2025
+    , tasty-bench
+
+  hs-source-dirs: bench
