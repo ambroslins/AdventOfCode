@@ -89,7 +89,7 @@ library
   -- other-extensions:
   hs-source-dirs:  src
 
-executable AoC2024
+executable AoC2025
   import:         warnings, extensions, dependencies
   main-is:        Main.hs
   ghc-options:    -threaded -rtsopts -with-rtsopts=-qg
@@ -99,7 +99,7 @@ executable AoC2024
   build-depends:  AoC2025
   hs-source-dirs: app
 
-benchmark AoC2024-bench
+benchmark AoC2025-bench
   import:         warnings, extensions, dependencies
   type:           exitcode-stdio-1.0
   main-is:        Main.hs
