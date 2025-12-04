@@ -38,6 +38,7 @@ common dependencies
     , http-client
     , http-client-tls
     , http-types
+    , massiv
     , mtl
     , parallel
     , parser-combinators
