@@ -11,6 +11,7 @@ import Data.ByteString qualified as BS
 import Data.Char qualified as Char
 import Data.Int (Int8)
 import Data.Massiv.Array qualified as M
+import Data.Massiv.Array.Unsafe qualified as M
 import Data.Massiv.Core (Ix2 (..))
 import Data.Monoid (Sum (..))
 import Data.Word (Word8)
@@ -40,7 +41,7 @@ solve :: M.Array M.U Ix2 Int8 -> (Int, Int)
 solve grid = (solve1 neighbours, solve2 neighbours)
   where
     neighbours = M.compute @M.U $ M.mapStencil (M.Fill 0) stencil grid
-    stencil = M.makeStencil (M.Sz (3 :. 3)) (1 :. 1) $ \get ->
+    stencil = M.makeUnsafeStencil (M.Sz (3 :. 3)) (1 :. 1) $ \_ get ->
       get (-1 :. -1)
         + get (-1 :. 0)
         + get (-1 :. 1)
