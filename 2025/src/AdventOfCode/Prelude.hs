@@ -27,6 +27,7 @@ module AdventOfCode.Prelude
     module Data.Maybe,
     module Data.List.NonEmpty,
     (&&&),
+    c2w,
     findFirst,
     sortBy,
     sortOn,
@@ -56,6 +57,7 @@ import Control.Monad (guard)
 import Data.Attoparsec.ByteString (Parser, sepBy')
 import Data.Bifunctor (first, second)
 import Data.ByteString (ByteString)
+import Data.Char qualified as Char
 import Data.Either
 import Data.Foldable (foldMap', foldl')
 import Data.Foldable1 (Foldable1, foldMap1', foldl1', foldr1)
@@ -70,6 +72,7 @@ import Data.List.NonEmpty (NonEmpty (..), nonEmpty)
 import Data.Map (Map)
 import Data.Maybe
 import Data.Set (Set)
+import Data.Word (Word8)
 import GHC.Generics (Generic)
 
 data Solution
@@ -79,6 +82,9 @@ data Solution
   { parser :: Parser a,
     solver :: a -> (part1, part2)
   }
+
+c2w :: Char -> Word8
+c2w = fromIntegral . Char.ord
 
 sepBy1' :: Parser a -> Parser b -> Parser (NonEmpty a)
 sepBy1' p sep = do

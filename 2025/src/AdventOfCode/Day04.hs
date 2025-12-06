@@ -8,13 +8,11 @@ import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
 import Control.Monad (unless, when)
 import Data.ByteString qualified as BS
-import Data.Char qualified as Char
 import Data.Int (Int8)
 import Data.Massiv.Array qualified as M
 import Data.Massiv.Array.Unsafe qualified as M
 import Data.Massiv.Core (Ix2 (..))
 import Data.Monoid (Sum (..))
-import Data.Word (Word8)
 
 solution :: Solution
 solution =
@@ -33,9 +31,6 @@ parseArray = do
   pure $
     M.makeArray M.Seq (M.Sz (nrows :. ncols)) $
       \(row :. col) -> if BS.index bs (row * (ncols + 1) + col) == roll then 1 else 0
-
-c2w :: Char -> Word8
-c2w = fromIntegral . Char.ord
 
 solve :: M.Array M.U Ix2 Int8 -> (Int, Int)
 solve grid = (solve1 neighbours, solve2 neighbours)

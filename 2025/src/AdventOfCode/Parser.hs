@@ -8,14 +8,17 @@ module AdventOfCode.Parser
     lines,
     symbol,
     whitespace,
+    isDigit8,
   )
 where
 
+import AdventOfCode.Prelude (c2w)
 import Control.Applicative (Alternative (..))
 import Data.Attoparsec.ByteString qualified as Word8
 import Data.Attoparsec.ByteString.Char8
 import Data.ByteString (ByteString)
 import Data.ByteString.Char8 qualified as BS
+import Data.Word (Word8)
 import Prelude hiding (lines)
 
 runParser :: Parser a -> ByteString -> a
@@ -40,3 +43,6 @@ lexeme p = p <* whitespace
 
 symbol :: ByteString -> Parser ()
 symbol s = string s *> whitespace
+
+isDigit8 :: Word8 -> Bool
+isDigit8 w = w >= c2w '0' && w <= c2w '9'
