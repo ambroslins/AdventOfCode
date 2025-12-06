@@ -14,7 +14,7 @@ parseLine :: Parser Int
 parseLine = do
   dir <- Parser.anyChar
   distance <- Parser.decimal
-  pure $ if dir == 'L' then negate distance else distance
+  pure $! if dir == 'L' then negate distance else distance
 
 solve :: [Int] -> (Int, Int)
 solve rs = let (_, !p1, !p2) = foldl' go (50, 0, 0) rs in (p1, p2)

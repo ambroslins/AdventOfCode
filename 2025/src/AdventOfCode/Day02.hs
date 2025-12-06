@@ -2,75 +2,56 @@ module AdventOfCode.Day02 where
 
 import AdventOfCode.Parser qualified as Parser
 import AdventOfCode.Prelude
-import Data.Bits (shiftR)
+import Data.Coerce (coerce)
 import Data.Monoid (Sum (..))
-import Data.Vector.Unboxed (Vector)
-import Data.Vector.Unboxed qualified as Vector
 
 solution :: Solution
 solution =
   Solution
     { parser = (parseRange `sepBy'` Parser.char ',') <* Parser.endOfLine,
-      solver = solve invalidIds1 &&& solve invalidIds2
+      solver = solve
     }
 
 parseRange :: Parser (Int, Int)
 parseRange = do
-  start <- Parser.decimal
+  !start <- Parser.decimal
   _ <- Parser.char '-'
-  end <- Parser.decimal
+  !end <- Parser.decimal
   return (start, end)
 
-solve :: Vector Int -> [(Int, Int)] -> Int
-solve ids = getSum . foldMap' (Sum . go)
+solve :: [(Int, Int)] -> (Int, Int)
+solve = coerce . foldMap' go
   where
-    go (start, end) =
-      let i = binarySearch start ids
-          j = binarySearch (end + 1) ids
-       in Vector.sum $ Vector.slice i (j - i) ids
+    go range =
+      let part1 =
+            countInvalidIds 2 2 range
+              + countInvalidIds 4 2 range
+              + countInvalidIds 6 2 range
+              + countInvalidIds 8 2 range
+              + countInvalidIds 10 2 range
+          part2 =
+            part1
+              + countInvalidIds 3 3 range
+              + countInvalidIds 5 5 range
+              + countInvalidIds 6 3 range
+              + countInvalidIds 7 7 range
+              + countInvalidIds 9 3 range
+              + countInvalidIds 10 5 range
+              - countInvalidIds 6 6 range
+              - countInvalidIds 10 10 range
+       in (Sum part1, Sum part2)
 
-invalidIds1 :: Vector Int
-invalidIds1 =
-  Vector.fromListN 99_999 $
-    concat
-      [ map (* 11) [1 .. 9],
-        map (* 0_101) [10 .. 99],
-        map (* 001_001) [100 .. 999],
-        map (* 00_010_001) [1_000 .. 9_999],
-        map (* 0_000_100_001) [10_000 .. 99_999]
-      ]
-
-invalidIds2 :: Vector Int
-invalidIds2 =
-  Vector.fromListN 101_088 $
-    concat
-      [ map (* 11) [1 .. 9],
-        map (* 111) [1 .. 9],
-        map (* 0_101) [10 .. 99],
-        map (* 11_111) [1 .. 9],
-        map (* 010_101) [10 .. 99] `merge` map (* 001_001) [100 .. 999],
-        map (* 1_111_111) [1 .. 9],
-        map (* 01_010_101) [10 .. 99] `merge` map (* 00_010_001) [1_000 .. 9_999],
-        map (* 001_001_001) [100 .. 999],
-        map (* 0_101_010_101) [10 .. 99] `merge` map (* 0_000_100_001) [10_000 .. 99_999]
-      ]
-
-merge :: (Ord a) => [a] -> [a] -> [a]
-merge xs [] = xs
-merge [] ys = ys
-merge a@(x : xs) b@(y : ys) = case compare x y of
-  LT -> x : merge xs b
-  EQ -> x : merge xs ys
-  GT -> y : merge a ys
-
-binarySearch :: (Vector.Unbox a, Ord a) => a -> Vector a -> Int
-binarySearch x v = go 0 (Vector.length v - 1)
+countInvalidIds :: Int -> Int -> (Int, Int) -> Int
+countInvalidIds digits reps (start, end)
+  | n > m = 0
+  | otherwise = pattern * (1 + m - n) * (n + m) `div` 2
   where
-    go !l !r
-      | l >= r = l
-      | otherwise =
-          let !m = (l + r) `shiftR` 1
-           in case compare x (Vector.unsafeIndex v m) of
-                LT -> go l m
-                EQ -> m
-                GT -> go (m + 1) r
+    base = 10 ^ (digits `div` reps)
+    pattern = (10 ^ digits - 1) `div` (base - 1)
+    lower = base `div` 10
+    upper = base - 1
+    n =
+      max lower $
+        let (d, rest) = start `divMod` pattern
+         in if rest == 0 then d else d + 1
+    m = min upper $ end `div` pattern
