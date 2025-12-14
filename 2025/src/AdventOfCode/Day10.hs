@@ -23,21 +23,6 @@ data Machine = Machine
   }
   deriving (Show)
 
-data V12 a = V12 !a !a !a !a !a !a !a !a !a !a !a !a
-  deriving (Eq, Show, Functor, Foldable, Traversable)
-
-instance Applicative V12 where
-  pure x = V12 x x x x x x x x x x x x
-  V12 f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12
-    <*> V12 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 =
-      V12 (f1 x1) (f2 x2) (f3 x3) (f4 x4) (f5 x5) (f6 x6) (f7 x7) (f8 x8) (f9 x9) (f10 x10) (f11 x11) (f12 x12)
-
-fromList :: a -> [a] -> V12 a
-fromList zero l = case l ++ repeat zero of
-  x1 : x2 : x3 : x4 : x5 : x6 : x7 : x8 : x9 : x10 : x11 : x12 : _ ->
-    V12 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12
-  _ -> error "impossible: finite list"
-
 parseMachine :: Parser Machine
 parseMachine = do
   lights <-
@@ -89,20 +74,6 @@ part2 Machine {buttons, joltages} = go joltages
 expandButton :: Int -> Int -> VU.Vector Int16
 expandButton n b = VU.generate n (\i -> if b `testBit` i then 1 else 0)
 
-{- 10,11,11,5,10,5 - 2,1,1,1,2,1
- -  8,10,10,4,8,4
- -  4, 5, 5,2,4,2
- -
- -}
-
-{-
-parityPresses :: VU.Vector Int16 -> [VU.Vector Int16] -> [VU.Vector Int16]
-parityPresses parity =
-  filter (VU.all (\v -> not $ v `testBit` 0) . VU.zipWith xor parity)
-    . mapMaybe (fmap (foldl1' $ VU.zipWith (+)) . nonEmpty)
-    . List.subsequences
--}
-
 parityMatches :: VU.Vector Int16 -> [VU.Vector Int16] -> [(Int, VU.Vector Int16)]
 parityMatches parity =
   filter (sameParity . snd)
@@ -116,34 +87,3 @@ parityMatches parity =
       where
         f :: (Int, VU.Vector Int16) -> [(Int, VU.Vector Int16)] -> [(Int, VU.Vector Int16)]
         f (n, y) ys = (n, y) : (n + 1, VU.zipWith (+) x y) : ys
-
-{-
-
-makeSystem :: Machine -> Matrix U Double
-makeSystem Machine {buttons, joltage} =
-  M.resize' (Sz2 n (m + 1)) . M.fromUnboxedVector Seq . V.concat . List.sortBy (flip compare) $
-    [ V.fromListN (m + 1) $ map (\b -> if b `testBit` i then 1 else 0) buttons ++ [fromIntegral j]
-    | (i, j) <- zip [0 ..] joltage
-    ]
-  where
-    n = length joltage
-    m = length buttons
-
-solveSystem :: Matrix U Double -> Matrix U Double
-solveSystem system = runST $ do
-  sys <- M.thawS system
-  for 0 (min (m - 2) (n - 1)) $ \pivot -> do
-    p <- M.readM sys (Ix2 pivot pivot)
-    when (p /= 0) $ for (pivot + 1) (n - 1) $ \i -> do
-      x <- M.readM sys (Ix2 i pivot)
-      let r = x / p
-      when (x /= 0.0) $ for pivot (m - 1) $ \j ->
-        M.modifyM_
-          sys
-          (\y -> do z <- M.readM sys (Ix2 pivot j); pure (y - r * z))
-          (Ix2 i j)
-
-  M.freezeS sys
-  where
-    Sz2 n m = M.size system
--}
