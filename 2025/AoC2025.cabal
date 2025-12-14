@@ -64,19 +64,6 @@ library
     AdventOfCode.Day10
     AdventOfCode.Day11
     AdventOfCode.Day12
-    AdventOfCode.Day13
-    AdventOfCode.Day14
-    AdventOfCode.Day15
-    AdventOfCode.Day16
-    AdventOfCode.Day17
-    AdventOfCode.Day18
-    AdventOfCode.Day19
-    AdventOfCode.Day20
-    AdventOfCode.Day21
-    AdventOfCode.Day22
-    AdventOfCode.Day23
-    AdventOfCode.Day24
-    AdventOfCode.Day25
     AdventOfCode.Graph
     AdventOfCode.Grid
     AdventOfCode.Interval

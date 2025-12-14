@@ -20,19 +20,6 @@ import AdventOfCode.Day09 qualified as Day09
 import AdventOfCode.Day10 qualified as Day10
 import AdventOfCode.Day11 qualified as Day11
 import AdventOfCode.Day12 qualified as Day12
-import AdventOfCode.Day13 qualified as Day13
-import AdventOfCode.Day14 qualified as Day14
-import AdventOfCode.Day15 qualified as Day15
-import AdventOfCode.Day16 qualified as Day16
-import AdventOfCode.Day17 qualified as Day17
-import AdventOfCode.Day18 qualified as Day18
-import AdventOfCode.Day19 qualified as Day19
-import AdventOfCode.Day20 qualified as Day20
-import AdventOfCode.Day21 qualified as Day21
-import AdventOfCode.Day22 qualified as Day22
-import AdventOfCode.Day23 qualified as Day23
-import AdventOfCode.Day24 qualified as Day24
-import AdventOfCode.Day25 qualified as Day25
 import AdventOfCode.Parser (runParser)
 import AdventOfCode.Prelude
 import Control.Exception (SomeException (..), catch, handle)
@@ -77,20 +64,7 @@ solutions =
       (9, Day09.solution),
       (10, Day10.solution),
       (11, Day11.solution),
-      (12, Day12.solution),
-      (13, Day13.solution),
-      (14, Day14.solution),
-      (15, Day15.solution),
-      (16, Day16.solution),
-      (17, Day17.solution),
-      (18, Day18.solution),
-      (19, Day19.solution),
-      (20, Day20.solution),
-      (21, Day21.solution),
-      (22, Day22.solution),
-      (23, Day23.solution),
-      (24, Day24.solution),
-      (25, Day25.solution)
+      (12, Day12.solution)
     ]
 
 readInputFile :: Int -> IO ByteString
